@@ -35,7 +35,7 @@ describe('Component Wrapper shadow false', () => {
     el = document.createElement('div')
     el.innerHTML = `<test-tag><div slot="inner">HERE</div></test-tag>`
     document.body.appendChild(el)
-    expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div>HERE</div></div><!--<TestTag>--></test-tag>')
+    expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>')
   })
 
   it('both slots', () => {
