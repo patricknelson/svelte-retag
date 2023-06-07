@@ -54,6 +54,7 @@ name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
 ```html
+
 <hello-world name="Cris"></hello-world>
 ```
 
@@ -65,7 +66,7 @@ to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API
 | shadow     | `false`      | boolean - Should this component use shadow dom                                                                                                    |
 | href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).    |
 
-**Note:** For portability, the `svelte-retag` API is backward compatible
+**Note:** For portability, the API for this `svelte-retag` package is backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
 ## To Do
