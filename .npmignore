@@ -1,0 +1,9 @@
+# From .gitignore
+node_modules
+coverage/**
+.idea/**
+
+# Additional artifacts to exclude
+.github
+*.ai
+tests/**
