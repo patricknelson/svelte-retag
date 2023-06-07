@@ -7,6 +7,18 @@
 A web component wrapper for Svelte. Embeds your Svelte app or components inside custom elements using the light DOM _or_
 shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
+## Core features
+
+* **"Light" DOM:** Allows you to render your Svelte 3 components in the light DOM as usual, taking full advantage of
+	global styles while still maintaining encapsulation of your component specific styles, utilizing web fonts and so on.
+* **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
+	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
+* **Flexibility:** Allows you to define only the necessary components that need to be custom element tags. Use your
+	component normally within Svelte (e.g. `<ExampleComponent />`) and as a custom element outside of Svelte (
+	e.g. `<example-component></example-component>`).
+* **Portability:** Freedom to utilize your Svelte components anywhere custom elements are supported (including in legacy
+	applications, regardless of the stack).
+
 ## Why?
 
 Svelte 3 already allows you to compile your components to custom elements. However, it has a couple of flaws:
@@ -15,18 +27,6 @@ Svelte 3 already allows you to compile your components to custom elements. Howev
 * You have to use shadow DOM.
 * You have to deal with lots of bugs.
 * You loose many features Svelte has for inter-component communication.
-
-## Core features
-
-* **"Light" DOM:** Allows you to render your Svelte 3 components in the light DOM as usual, taking full advantage of
-	global styles while still maintaining encapsulation of your component specific styles, utilizing web fonts and so on.
-* **Flexibility:** Pick and choose the only components that need to be defined as custom element tags. Use your
-	component normally within Svelte (e.g. `<ExampleComponent />`) and as a custom element outside of Svelte (
-	e.g. `<example-component></example-component>`).
-* **Portability:** Freedom to utilize your Svelte components in legacy applications that cannot be fully migrated to
-	Svelte.
-* **Vite HMR:** Compatible with Vite's HMR and avoids the infamous
-	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
 
 ## How do I use it?
 
