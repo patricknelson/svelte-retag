@@ -180,9 +180,14 @@ export default function(opts) {
 				// can ensure we aren't inadvertently getting nested slots that apply to other custom elements.
 				let slotParent = this.findSlotParent(candidate);
 				if (slotParent === null) continue;
-				if (slotParent.tagName !== this.tagName) continue;
+				if (slotParent !== this) continue;
 
 				slots[candidate.slot] = candidate;
+				// TODO: Potentially problematic in edge cases where the browser may *oddly* return slots from query selector
+				//  above, yet their not actually a child of the current element. This seems to only happen if another
+				//  constructor() + connectedCallback() are BOTH called for this particular element again BEFORE a
+				//  disconnectedCallback() gets called (out of sync). Only experienced in Chrome when manually editing the HTML
+				//  when there were multiple other custom elements present inside the slot of another element (very edge case?)
 				this.removeChild(candidate);
 			}
 

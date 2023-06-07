@@ -49,12 +49,16 @@ describe('Component Wrapper shadow false', () => {
 
 	// TODO: Unit test to validate that an error occurs when they define a "default" named slot but have remaining unslotted elements left over.
 
-	it('nested tags', () => {
+	it('inner slot and default slot with other tags', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-tag><h2>Nested</h2><div slot="inner">HERE</div></test-tag>';
 		document.body.appendChild(el);
 		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content"><h2>Nested</h2> <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
 	});
+
+	// TODO: Validate that nested slots are working as expected (totally different tags/components)
+
+	// TODO: Validate that nested slots are working as expected (same tag)
 
 	it('Unknown slot gets ignored', () => {
 		let tmp = console.warn;
