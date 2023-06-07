@@ -89,9 +89,10 @@ On the immediate horizon:
 
 ## Support & Contribution
 
-**Please Note:** The API for this package is intentionally minimal. However, if you have any suggestions, feature
+The API for this package is intentionally minimal. However, if you have any suggestions, feature
 requests or bugs at all, please be sure to [open an issue](https://github.com/patricknelson/svelte-retag/issues) first.
-If you'd like to contribute, please feel free to open a PR, **however**: Please make sure you attach it to an existing
+
+If you'd like to contribute, please feel free to open a PR, **however**: If possible, please attach it to an existing
 issue to ensure that discussion regarding your pull request isn't lost (in case it cannot be merged for whatever
 reason).
 
