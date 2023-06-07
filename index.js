@@ -48,11 +48,14 @@ function createSvelteSlots(slots) {
  * @param {string[]?} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified.
  * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
  * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
+ * @param {boolean?}  opts.debugMode  Hidden option to enable debugging for package development purposes.
  */
 export default function(opts) {
 	class Wrapper extends HTMLElement {
 		constructor() {
 			super();
+
+			this.debug('constructor()');
 			this.slotCount = 0;
 			let root = opts.shadow ? this.attachShadow({ mode: 'open' }) : this;
 
@@ -77,6 +80,8 @@ export default function(opts) {
 		}
 
 		connectedCallback() {
+			this.debug('connectedCallback()');
+
 			// Props passed to Svelte component constructor.
 			let props = {
 				$$scope: {}
@@ -105,6 +110,8 @@ export default function(opts) {
 		}
 
 		disconnectedCallback() {
+			this.debug('disconnectedCallback()');
+
 			if (this.observer) {
 				this.observer.disconnect();
 			}
@@ -214,6 +221,8 @@ export default function(opts) {
 		//  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
 		//  during initial browser parsing and before the closing tag is encountered.
 		processMutations({ root, props }, mutations) {
+			this.debug('processMutations()');
+
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
 					let slots = this.getShadowSlots();
@@ -240,9 +249,30 @@ export default function(opts) {
 			}
 		}
 
+		/**
+		 * Forward modifications to element attributes to the corresponding Svelte prop.
+		 *
+		 * @param {string} name
+		 * @param {string} oldValue
+		 * @param {string} newValue
+		 */
 		attributeChangedCallback(name, oldValue, newValue) {
+			this.debug('attributes changed', {name, oldValue, newValue});
+
 			if (this.elem && newValue !== oldValue) {
 				this.elem.$set({ [name]: newValue });
+			}
+		}
+
+		/**
+		 * Pass through to console.log() but includes a reference to the custom element in the log for easier targeting for
+		 * debugging purposes.
+		 *
+		 * @param {...*}
+		 */
+		debug() {
+			if (opts.debugMode) {
+				console.log.apply(null, [this, ...arguments]);
 			}
 		}
 	}
