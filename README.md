@@ -14,11 +14,11 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 	encapsulation of your component specific styles, utilizing web fonts and so on.
 * **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
 	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
-* **Flexibility:** Allows you to define only the necessary components that need to be custom element tags. Use your
-	component normally within Svelte (e.g. `<ExampleComponent />`) and as a custom element outside of Svelte (
-	e.g. `<example-component></example-component>`).
-* **Portability:** Freedom to utilize your Svelte components anywhere custom elements are supported (including in legacy
-	applications, regardless of the stack).
+* **Flexibility:** Allows you to use your component as you normally would within Svelte (`<ExampleComponent />`) _and_
+	as a custom element outside of Svelte (`<example-component></example-component>`). You only need to define the
+	components that need to be available as custom elements along with their associated tag names.
+* **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
+	regardless of the stack (great for upgrading legacy applications).
 
 ## Why?
 
@@ -55,6 +55,7 @@ name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
 ```html
+
 <hello-world name="Cris"></hello-world>
 ```
 
