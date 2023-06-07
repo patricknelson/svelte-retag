@@ -165,12 +165,10 @@ export default function(opts) {
 
 		getSlots() {
 			let slots = {};
-			let hasNamedSlots = false;
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			queryNamedSlots.forEach(candidate => {
-
 				// Traverse parents and find first custom element and ensure its tag name matches this one. That way, we
 				// can ensure we aren't inadvertently getting nested slots that apply to other custom elements.
 				let slotParent = this.findSlotParent(candidate);
@@ -179,17 +177,18 @@ export default function(opts) {
 
 				slots[candidate.slot] = candidate;
 				this.removeChild(candidate);
-				hasNamedSlots = true;
 			});
 
-			// Default slots are allowed alongside named slots (https://github.com/sveltejs/svelte/issues/4561), however
-			// we shouldn't be setting default slots *with* named slots if the remaining content isn't wrapped/declared
-			// somehow, effectively meaning that you'd need to also define a slot="default", thus making these two
-			// sections mutually exclusive. This check also helps ensure we don't unnecessarily set a default slot for
-			// components that don't expect it and ensures developers keep their code clean (i.e. don't introduce
-			// whitespace in between tags that don't have default slots).
-			if (!hasNamedSlots && this.innerHTML.length !== 0) {
-				slots.default = this.unwrap(this);
+			// Default slots are indeed allowed alongside named slots, as long as the named slots are elided *first*. We
+			// should also make sure we trim out whitespace in case all slots and elements are already removed. We don't want
+			// to accidentally pass content (whitespace) to a component that isn't setup with a default slot.
+			if (this.innerHTML.trim().length !== 0) {
+				if (slots.default) {
+					// Edge case: User has a named "default" as well as remaining HTML left over. Use same error as Svelte.
+					console.error(`svelteRetag: '${this.tagName}': Found elements without slot attribute when using slot="default"`);
+				} else {
+					slots.default = this.unwrap(this);
+				}
 				this.innerHTML = '';
 			}
 

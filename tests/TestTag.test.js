@@ -47,6 +47,8 @@ describe('Component Wrapper shadow false', () => {
 		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">BOOM! <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
 	});
 
+	// TODO: Unit test to validate that an error occurs when they define a "default" named slot but have remaining unslotted elements left over.
+
 	it('nested tags', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-tag><h2>Nested</h2><div slot="inner">HERE</div></test-tag>';
@@ -103,6 +105,7 @@ describe('Component Wrapper shadow true', () => {
 		el.innerHTML = '<test-shad>BOOM!<div slot="inner">HERE</div></test-shad>';
 		document.body.appendChild(el);
 		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
+		// TODO: Why does this not produce the inner HERE? Maybe just my ignorance.
 		expect(shadowhtml).toBe('<div><h1>Main H1</h1> <div class="content"><slot></slot> <div><slot name="inner"></slot></div></div><!--<TestTag>--></div>');
 	});
 
