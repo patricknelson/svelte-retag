@@ -39,6 +39,7 @@ function createSvelteSlots(slots) {
 	return svelteSlots;
 }
 
+
 /**
  * @param {object} opts Custom element options
  *
@@ -52,15 +53,17 @@ export default function(opts) {
 	class Wrapper extends HTMLElement {
 		constructor() {
 			super();
-			this.slotcount = 0;
+			this.slotCount = 0;
 			let root = opts.shadow ? this.attachShadow({ mode: 'open' }) : this;
-			// link generated style
+
+			// Link generated style (shadow root only). Do early as possible to ensure we start downloading CSS (reduces FOUC).
 			if (opts.href && opts.shadow) {
 				let link = document.createElement('link');
 				link.setAttribute('href', opts.href);
 				link.setAttribute('rel', 'stylesheet');
 				root.appendChild(link);
 			}
+
 			if (opts.shadow) {
 				this._root = document.createElement('div');
 				root.appendChild(this._root);
@@ -93,7 +96,7 @@ export default function(opts) {
 			} else {
 				slots = this.getSlots();
 			}
-			this.slotcount = Object.keys(slots).length;
+			this.slotCount = Object.keys(slots).length;
 			props.$$slots = createSvelteSlots(slots);
 
 			this.elem = new opts.component({ target: this._root, props });
@@ -172,9 +175,9 @@ export default function(opts) {
 						props.$$slots = createSvelteSlots(slots);
 						this.elem.$set({ '$$slots': createSvelteSlots(slots) });
 						// do full re-render on slot count change - needed for tabs component
-						if (this.slotcount !== Object.keys(slots).length) {
+						if (this.slotCount !== Object.keys(slots).length) {
 							Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value); // TODO: Redundant, repeated on connectedCallback().
-							this.slotcount = Object.keys(slots).length;
+							this.slotCount = Object.keys(slots).length;
 							root.innerHTML = '';
 							this.elem = new opts.component({ target: root, props });
 						}
