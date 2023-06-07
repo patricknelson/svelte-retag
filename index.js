@@ -156,7 +156,7 @@ export default function(opts) {
 		}
 
 		/**
-		 * Traverses DOM to find the first custom element that the provided slot belongs to.
+		 * Traverses DOM to find the first custom element that the provided <slot> element happens to belong to.
 		 *
 		 * @param {Element} slot
 		 * @returns {HTMLElement|null}
@@ -170,17 +170,26 @@ export default function(opts) {
 			return null;
 		}
 
+		/**
+		 * Indicates if the provided <slot> element instance belongs to this custom element or not.
+		 *
+		 * @param {Element} slot
+		 * @returns {boolean}
+		 */
+		isOwnSlot(slot) {
+			let slotParent = this.findSlotParent(slot);
+			if (slotParent === null) return false;
+			return (slotParent === this);
+		}
+
 		getSlots() {
 			let slots = {};
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			for(let candidate of queryNamedSlots) {
-				// Traverse parents and find first custom element and ensure its tag name matches this one. That way, we
-				// can ensure we aren't inadvertently getting nested slots that apply to other custom elements.
-				let slotParent = this.findSlotParent(candidate);
-				if (slotParent === null) continue;
-				if (slotParent !== this) continue;
+				// Skip this slot if it doesn't happen to belong to THIS custom element.
+				if (!this.isOwnSlot(candidate)) continue;
 
 				slots[candidate.slot] = candidate;
 				// TODO: Potentially problematic in edge cases where the browser may *oddly* return slots from query selector
