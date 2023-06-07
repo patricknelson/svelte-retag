@@ -19,14 +19,14 @@ Svelte 3 already allows you to compile your components to custom elements. Howev
 ## Core features
 
 * **"Light" DOM:** Allows you to render your Svelte 3 components in the light DOM as usual, taking full advantage of
-  global styles while still maintaining encapsulation of your component specific styles, utilizing web fonts and so on.
+	global styles while still maintaining encapsulation of your component specific styles, utilizing web fonts and so on.
 * **Flexibility:** Pick and choose the only components that need to be defined as custom element tags. Use your
-  component normally within Svelte (e.g. `<ExampleComponent />`) and as a custom element outside of Svelte (
-  e.g. `<example-component></example-component>`).
+	component normally within Svelte (e.g. `<ExampleComponent />`) and as a custom element outside of Svelte (
+	e.g. `<example-component></example-component>`).
 * **Portability:** Freedom to utilize your Svelte components in legacy applications that cannot be fully migrated to
-  Svelte.
+	Svelte.
 * **Vite HMR:** Compatible with Vite's HMR and avoids the infamous
-  error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
+	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
 
 ## How do I use it?
 
@@ -77,12 +77,12 @@ On the immediate horizon:
 - [ ] Fix nested slot support (see https://github.com/crisward/svelte-tag/issues/7)
 - [ ] Support Lit-style lowercase props (see https://github.com/crisward/svelte-tag/issues/16)
 - [ ] Better support for slots during early execution of IIFE compiled packages (i.e. use `MutationObserver` to watch
-  for light DOM slots during initial parsing)
+	for light DOM slots during initial parsing)
 - [ ] Support context (see https://github.com/crisward/svelte-tag/issues/8)
 
 ## Support & Contribution
 
-**Please Note:** The API for this library is intentionally minimal. However, if you have any suggestions or any bugs
+**Please Note:** The API for this package is intentionally minimal. However, if you have any suggestions or any bugs
 at all, please be sure to [open an issue](https://github.com/patricknelson/svelte-retag/issues) first. If you'd like
 to contribute, please feel free to open a PR, **however**, please make sure you attach it to an existing issue to ensure
 that discussion regarding your pull request isn't lost (in case it cannot be merged for whatever reason).
@@ -90,4 +90,6 @@ that discussion regarding your pull request isn't lost (in case it cannot be mer
 ## Attribution
 
 * Logo - Rich Harris, MIT <http://opensource.org/licenses/mit-license.php>, via Wikimedia Commons
-* `svelte-tag` - Chris Ward (@crisward). Forked and modified from https://github.com/crisward/svelte-tag
+* [`svelte-tag`](https://github.com/crisward/svelte-tag) - Chris Ward (@crisward), This package was forked and modified
+	from https://github.com/crisward/svelte-tag (hence the "re" in `svelte-retag`).
+
