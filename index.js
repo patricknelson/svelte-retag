@@ -86,18 +86,20 @@ export default function(opts) {
 
 			// Populate custom element attributes into the props object.
 			// TODO: Inspect component and normalize to lowercase for Lit-style props (https://github.com/crisward/svelte-tag/issues/16)
-			let slots;
 			Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value);
 
+			// Setup slot elements, making sure to retain a reference to the original elements prior to processing, so they
+			// can be restored later on disconnectedCallback().
+			this.slotEls = {};
 			if (opts.shadow) {
-				slots = this.getShadowSlots();
+				this.slotEls = this.getShadowSlots();
 				this.observer = new MutationObserver(this.processMutations.bind(this, { root: this._root, props }));
 				this.observer.observe(this, { childList: true, subtree: true, attributes: false });
 			} else {
-				slots = this.getSlots();
+				this.slotEls = this.getSlots();
 			}
-			this.slotCount = Object.keys(slots).length;
-			props.$$slots = createSvelteSlots(slots);
+			this.slotCount = Object.keys(this.slotEls).length; // TODO: Refactor to getter
+			props.$$slots = createSvelteSlots(this.slotEls);
 
 			this.elem = new opts.component({ target: this._root, props });
 		}
@@ -107,14 +109,25 @@ export default function(opts) {
 				this.observer.disconnect();
 			}
 
-			// Double check that element has been initialized already. This could happen in case connectedCallback (which
-			// is async) hasn't fully completed yet.
+			// Double check that element has been initialized already. This could happen in case connectedCallback() hasn't
+			// fully completed yet (e.g. if initialization is async) TODO: May happen later if MutationObserver is setup for light DOM
 			if (this.elem) {
 				try {
-					// destroy svelte element when removed from domn
+					// Clean up: Destroy Svelte component when removed from DOM.
 					this.elem.$destroy();
 				} catch(err) {
 					console.error(`Error destroying Svelte component in '${this.tagName}'s disconnectedCallback(): ${err}`);
+				}
+			}
+
+			if (!opts.shadow) {
+				// Go through originally removed slots and restore back to the custom element. This is necessary in case
+				// we're just being appended elsewhere in the DOM (likely if we're nested under another custom element
+				// that initializes after this custom element, thus causing *another* round of construct/connectedCallback
+				// on this one).
+				for(let slotName in this.slotEls) {
+					let slotEl = this.slotEls[slotName];
+					this.appendChild(slotEl);
 				}
 			}
 		}
@@ -135,17 +148,51 @@ export default function(opts) {
 			return node;
 		}
 
+		/**
+		 * Traverses DOM to find the first custom element that the provided slot belongs to.
+		 *
+		 * @param {Element} slot
+		 * @returns {HTMLElement|null}
+		 */
+		findSlotParent(slot) {
+			let parentEl = slot.parentElement;
+			while(parentEl) {
+				if (parentEl.tagName.indexOf('-') !== -1) return parentEl;
+				parentEl = parentEl.parentElement;
+			}
+			return null;
+		}
+
 		getSlots() {
-			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
-			namedSlots.forEach(n => {
-				slots[n.slot] = n;
-				this.removeChild(n);
+			let hasNamedSlots = false;
+
+			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
+			const queryNamedSlots = this.querySelectorAll('[slot]');
+			queryNamedSlots.forEach(candidate => {
+
+				// Traverse parents and find first custom element and ensure its tag name matches this one. That way, we
+				// can ensure we aren't inadvertently getting nested slots that apply to other custom elements.
+				let slotParent = this.findSlotParent(candidate);
+				if (slotParent === null) return;
+				if (slotParent.tagName !== this.tagName) return;
+
+				slots[candidate.slot] = candidate;
+				this.removeChild(candidate);
+				hasNamedSlots = true;
 			});
-			if (this.innerHTML.length) {
+
+			// Default slots are allowed alongside named slots (https://github.com/sveltejs/svelte/issues/4561), however
+			// we shouldn't be setting default slots *with* named slots if the remaining content isn't wrapped/declared
+			// somehow, effectively meaning that you'd need to also define a slot="default", thus making these two
+			// sections mutually exclusive. This check also helps ensure we don't unnecessarily set a default slot for
+			// components that don't expect it and ensures developers keep their code clean (i.e. don't introduce
+			// whitespace in between tags that don't have default slots).
+			if (!hasNamedSlots && this.innerHTML.length !== 0) {
 				slots.default = this.unwrap(this);
 				this.innerHTML = '';
 			}
+
 			return slots;
 		}
 
