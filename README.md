@@ -35,10 +35,10 @@ npm install svelte-retag
 ```
 
 ```javascript
-import SvelteRetag from 'svelte-retag'
+import svelteRetag from 'svelte-retag'
 import HelloWorld from 'hello-world.svelte'
 
-new SvelteRetag({
+svelteRetag({
 	component: HelloWorld,
 	tagname: 'hello-world',
 

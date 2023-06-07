@@ -1,7 +1,7 @@
 import { describe, beforeAll, afterEach, it, expect } from 'vitest';
 import { tick } from 'svelte';
 import TestTag from './TestTag.svelte';
-import SvelteRetag from '../index.js';
+import svelteRetag from '../index.js';
 
 // See vite.config.js for configuration details.
 
@@ -12,7 +12,7 @@ let el = null;
 describe('Component Wrapper shadow false', () => {
 
 	beforeAll(() => {
-		SvelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
+		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
 	});
 
 	afterEach(() => {
@@ -70,7 +70,7 @@ describe('Component Wrapper shadow false', () => {
 describe('Component Wrapper shadow true', () => {
 
 	beforeAll(() => {
-		SvelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
+		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
 	});
 
 	it('without slots', () => {
