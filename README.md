@@ -31,13 +31,17 @@ Svelte 3 already allows you to compile your components to custom elements. Howev
 
 ## How do I use it?
 
+### Installation
+
 ```bash
 npm install svelte-retag
 ```
 
+### Demo code
+
 ```javascript
-import svelteRetag from 'svelte-retag'
-import HelloWorld from 'hello-world.svelte'
+import svelteRetag from 'svelte-retag';
+import HelloWorld from 'hello-world.svelte';
 
 svelteRetag({
 	component: HelloWorld,
@@ -47,27 +51,28 @@ svelteRetag({
 	attributes: ['greeting', 'name'],
 	shadow: false,
 	href: '/your/stylesheet.css', // Only necessary if shadow is true
-})
+});
 ```
 
-Now anywhere you use the `<hello-world>` custom element tag, you'll get a Svelte app. Note that you must set your tag
+Now anywhere you use the `<hello-world>` tag, you'll get a Svelte component. Note that you must set your tag
 name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
 ```html
-
 <hello-world name="Cris"></hello-world>
 ```
+
+### Options
 
 | Option     | Default      | Description                                                                                                                                       |
 |------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
 | component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                         |
 | tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements)) |
 | attributes | `[]`         | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component)                               |
-| shadow     | `false`      | boolean - Should this component use shadow dom                                                                                                    |
+| shadow     | `false`      | boolean - Should this component use shadow DOM                                                                                                    |
 | href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).    |
 
-**Note:** For portability, the API for this `svelte-retag` package is backward compatible
+**Note:** For portability, `svelte-retag`'s API is fully backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
 ## To Do
@@ -84,14 +89,15 @@ On the immediate horizon:
 
 ## Support & Contribution
 
-**Please Note:** The API for this package is intentionally minimal. However, if you have any suggestions or any bugs
-at all, please be sure to [open an issue](https://github.com/patricknelson/svelte-retag/issues) first. If you'd like
-to contribute, please feel free to open a PR, **however**, please make sure you attach it to an existing issue to ensure
-that discussion regarding your pull request isn't lost (in case it cannot be merged for whatever reason).
+**Please Note:** The API for this package is intentionally minimal. However, if you have any suggestions, feature
+requests or bugs at all, please be sure to [open an issue](https://github.com/patricknelson/svelte-retag/issues) first.
+If you'd like to contribute, please feel free to open a PR, **however**: Please make sure you attach it to an existing
+issue to ensure that discussion regarding your pull request isn't lost (in case it cannot be merged for whatever
+reason).
 
 ## Attribution
 
 * Logo - Rich Harris, MIT <http://opensource.org/licenses/mit-license.php>, via Wikimedia Commons
-* [`svelte-tag`](https://github.com/crisward/svelte-tag) - Chris Ward (@crisward), This package was forked and modified
-	from https://github.com/crisward/svelte-tag (hence the "re" in `svelte-retag`).
+* [`svelte-tag`](https://github.com/crisward/svelte-tag) - Chris Ward ([@crisward](https://github.com/crisward)). This
+	package was forked and modified from https://github.com/crisward/svelte-tag (thus the "re" in `svelte-retag`).
 
