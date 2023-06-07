@@ -74,7 +74,7 @@ On the immediate horizon:
 
 - [x] Migrate to Vitest for unit testing
 - [x] Update logo
-- [ ] Fix nested slot support (see https://github.com/crisward/svelte-tag/issues/7)
+- [ ] ⏳ Fix nested slot support (WIP @ https://github.com/patricknelson/svelte-retag/pull/5)
 - [ ] Support Lit-style lowercase props (see https://github.com/crisward/svelte-tag/issues/16)
 - [ ] Better support for slots during early execution of IIFE compiled packages (i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing)
