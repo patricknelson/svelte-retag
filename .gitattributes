@@ -4,3 +4,4 @@
 *.yml	eol=lf
 *.md	eol=lf
 *.svg	eol=lf
+*.svelte	eol=lf

@@ -1,15 +1,24 @@
 module.exports = {
-	'env': {
-		'browser': true,
-		'es6': true,
+	env: {
+		browser: true,
+		es6: true,
 	},
-	'extends': 'eslint:recommended',
-	'parserOptions': {
-		'ecmaVersion': 'latest',
-		'sourceType': 'module'
+	extends: [
+		'eslint:recommended',
+		'plugin:svelte/recommended',
+	],
+	parserOptions: {
+		ecmaVersion: 'latest',
+		sourceType: 'module'
 	},
-	'rules': {
-		'indent': [
+	overrides: [
+		{
+			files: ['*.svelte'],
+			parser: 'svelte-eslint-parser',
+		},
+	],
+	rules: {
+		indent: [
 			'error',
 			'tab'
 		],
@@ -17,15 +26,15 @@ module.exports = {
 			'error',
 			'unix'
 		],
-		'quotes': [
+		quotes: [
 			'error',
 			'single'
 		],
-		'semi': [
+		semi: [
 			'error',
 			'always'
 		],
-		'eqeqeq': [
+		eqeqeq: [
 			'error',
 			'smart'
 		]
