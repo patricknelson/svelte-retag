@@ -9,8 +9,9 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
 ## Core features
 
-* **"Light" DOM:** Allows you to render your Svelte 3 components in the light DOM as usual, taking full advantage of
-	global styles while still maintaining encapsulation of your component specific styles, utilizing web fonts and so on.
+* **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
+	requiring use of the shadow DOM). Doing so allows you to take full advantage of global styles while still maintaining
+	encapsulation of your component specific styles, utilizing web fonts and so on.
 * **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
 	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
 * **Flexibility:** Allows you to define only the necessary components that need to be custom element tags. Use your
@@ -54,7 +55,6 @@ name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
 ```html
-
 <hello-world name="Cris"></hello-world>
 ```
 
