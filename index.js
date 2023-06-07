@@ -175,16 +175,16 @@ export default function(opts) {
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
-			queryNamedSlots.forEach(candidate => {
+			for(let candidate of queryNamedSlots) {
 				// Traverse parents and find first custom element and ensure its tag name matches this one. That way, we
 				// can ensure we aren't inadvertently getting nested slots that apply to other custom elements.
 				let slotParent = this.findSlotParent(candidate);
-				if (slotParent === null) return;
-				if (slotParent.tagName !== this.tagName) return;
+				if (slotParent === null) continue;
+				if (slotParent.tagName !== this.tagName) continue;
 
 				slots[candidate.slot] = candidate;
 				this.removeChild(candidate);
-			});
+			}
 
 			// Default slots are indeed allowed alongside named slots, as long as the named slots are elided *first*. We
 			// should also make sure we trim out whitespace in case all slots and elements are already removed. We don't want
@@ -257,7 +257,7 @@ export default function(opts) {
 		 * @param {string} newValue
 		 */
 		attributeChangedCallback(name, oldValue, newValue) {
-			this.debug('attributes changed', {name, oldValue, newValue});
+			this.debug('attributes changed', { name, oldValue, newValue });
 
 			if (this.elem && newValue !== oldValue) {
 				this.elem.$set({ [name]: newValue });
