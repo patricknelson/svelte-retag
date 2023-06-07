@@ -217,9 +217,17 @@ export default function(opts) {
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
 					let slots = this.getShadowSlots();
+
+					// TODO: Should it re-render if the count changes at all? e.g. what if slots were REMOVED (reducing it to zero)?
+					//  We'd have latent content left over that's not getting updated, then. Consider rewrite...
 					if (Object.keys(slots).length) {
+
 						props.$$slots = createSvelteSlots(slots);
+
+						// TODO: Why is this set here but not re-rendered unless the slot count changes?
+						// TODO: Also, why is props.$$slots set above but not just passed here? Calling createSvelteSlots(slots) 2x...
 						this.elem.$set({ '$$slots': createSvelteSlots(slots) });
+
 						// do full re-render on slot count change - needed for tabs component
 						if (this.slotCount !== Object.keys(slots).length) {
 							Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value); // TODO: Redundant, repeated on connectedCallback().
