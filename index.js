@@ -56,7 +56,6 @@ export default function(opts) {
 			super();
 
 			this.debug('constructor()');
-			this.slotCount = 0;
 			let root = opts.shadow ? this.attachShadow({ mode: 'open' }) : this;
 
 			// Link generated style (shadow root only). Do early as possible to ensure we start downloading CSS (reduces FOUC).
@@ -83,45 +82,51 @@ export default function(opts) {
 			this.debug('connectedCallback()');
 
 			// Props passed to Svelte component constructor.
-			let props = {
-				$$scope: {}
-				// $$slots: initialized below
+			this.componentProps = {
+				$$scope: {},
+				$$slots: {}, // Here for reference, actually initialized below.
+
 				// All other props are pulled from element attributes (see below).
 			};
 
 			// Populate custom element attributes into the props object.
 			// TODO: Inspect component and normalize to lowercase for Lit-style props (https://github.com/crisward/svelte-tag/issues/16)
-			Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value);
+			Array.from(this.attributes).forEach(attr => this.componentProps[attr.name] = attr.value);
 
 			// Setup slot elements, making sure to retain a reference to the original elements prior to processing, so they
 			// can be restored later on disconnectedCallback().
 			this.slotEls = {};
 			if (opts.shadow) {
 				this.slotEls = this.getShadowSlots();
-				this.observer = new MutationObserver(this.processMutations.bind(this, { root: this._root, props }));
-				this.observer.observe(this, { childList: true, subtree: true, attributes: false });
+
+				// TODO: Abstract this for reuse in light DOM as well.
+				this.mutationObserver = new MutationObserver((mutations) => {
+					this.processMutations(mutations);
+				});
+				this.mutationObserver.observe(this, { childList: true, subtree: true, attributes: false });
+
 			} else {
 				this.slotEls = this.getSlots();
 			}
-			this.slotCount = Object.keys(this.slotEls).length; // TODO: Refactor to getter
-			props.$$slots = createSvelteSlots(this.slotEls);
 
-			this.elem = new opts.component({ target: this._root, props });
+			// TODO: Abstract these two lines so we can re-render based on known good slot elements.
+			this.componentProps.$$slots = createSvelteSlots(this.slotEls);
+			this.componentInstance = new opts.component({ target: this._root, props: this.componentProps });
 		}
 
 		disconnectedCallback() {
 			this.debug('disconnectedCallback()');
 
-			if (this.observer) {
-				this.observer.disconnect();
+			if (this.mutationObserver) {
+				this.mutationObserver.disconnect();
 			}
 
 			// Double check that element has been initialized already. This could happen in case connectedCallback() hasn't
 			// fully completed yet (e.g. if initialization is async) TODO: May happen later if MutationObserver is setup for light DOM
-			if (this.elem) {
+			if (this.componentInstance) {
 				try {
 					// Clean up: Destroy Svelte component when removed from DOM.
-					this.elem.$destroy();
+					this.componentInstance.$destroy();
 				} catch(err) {
 					console.error(`Error destroying Svelte component in '${this.tagName}'s disconnectedCallback(): ${err}`);
 				}
@@ -231,33 +236,36 @@ export default function(opts) {
 			return slots;
 		}
 
+		/**
+		 * The current number of known slots. This can change over time depending on when this custom element was
+		 * initialized, particularly if defined very early in initial page parsing.
+		 *
+		 * @returns {number}
+		 */
+		get slotCount() {
+			if (this.slotEls) return 0; // Initialized in connectedCallback().
+			return Object.keys(this.slotEls).length;
+		}
+
 		// TODO: Primarily used only for shadow DOM, however, MutationObserver would likely also be useful for IIFE-based
 		//  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
 		//  during initial browser parsing and before the closing tag is encountered.
-		processMutations({ root, props }, mutations) {
+		processMutations(mutations) {
 			this.debug('processMutations()');
 
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
-					let slots = this.getShadowSlots();
 
-					// TODO: Should it re-render if the count changes at all? e.g. what if slots were REMOVED (reducing it to zero)?
-					//  We'd have latent content left over that's not getting updated, then. Consider rewrite...
-					if (Object.keys(slots).length) {
+					// Fetch slots again and see if there has been a change in the number of slots. If so, re-render.
+					let slots = this.getShadowSlots(); // TODO: Can probably branch here and do light DOM init as well.
+					if (this.slotCount !== Object.keys(slots).length) {
+						// Retain a reference these slots for render now so we can unwind them on disconnectedCallback().
+						this.slotEls = slots;
+						this.componentProps.$$slots = createSvelteSlots(this.slotEls);
 
-						props.$$slots = createSvelteSlots(slots);
-
-						// TODO: Why is this set here but not re-rendered unless the slot count changes?
-						// TODO: Also, why is props.$$slots set above but not just passed here? Calling createSvelteSlots(slots) 2x...
-						this.elem.$set({ '$$slots': createSvelteSlots(slots) });
-
-						// do full re-render on slot count change - needed for tabs component
-						if (this.slotCount !== Object.keys(slots).length) {
-							Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value); // TODO: Redundant, repeated on connectedCallback().
-							this.slotCount = Object.keys(slots).length;
-							root.innerHTML = '';
-							this.elem = new opts.component({ target: root, props });
-						}
+						// On each re-render, we have to reset our root container since Svelte will just append to our target.
+						this._root.innerHTML = '';
+						this.componentInstance = new opts.component({ target: this._root, props: this.componentProps });
 					}
 				}
 			}
@@ -273,8 +281,8 @@ export default function(opts) {
 		attributeChangedCallback(name, oldValue, newValue) {
 			this.debug('attributes changed', { name, oldValue, newValue });
 
-			if (this.elem && newValue !== oldValue) {
-				this.elem.$set({ [name]: newValue });
+			if (this.componentInstance && newValue !== oldValue) {
+				this.componentInstance.$set({ [name]: newValue });
 			}
 		}
 
