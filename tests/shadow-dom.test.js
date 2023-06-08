@@ -1,7 +1,7 @@
-import { describe, beforeAll, afterEach, it, expect } from 'vitest';
-import { tick } from 'svelte';
-import TestTag from './TestTag.svelte';
+import { beforeAll, describe, expect, test } from 'vitest';
 import svelteRetag from '../index.js';
+import TestTag from './TestTag.svelte';
+import { tick } from 'svelte';
 
 // See vite.config.js for configuration details.
 
@@ -9,71 +9,13 @@ import svelteRetag from '../index.js';
 
 let el = null;
 
-describe('Component Wrapper shadow false', () => {
-
-	beforeAll(() => {
-		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
-	});
-
-	afterEach(() => {
-		el.remove();
-	});
-
-	it('without slots', async () => {
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag></test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></test-tag>');
-	});
-
-	it('with just default slot', () => {
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag>BOOM!</test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">BOOM! <div>Inner Default</div></div><!--<TestTag>--></test-tag>');
-	});
-
-	it('with just inner slot', () => {
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag><div slot="inner">HERE</div></test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
-	});
-
-	it('both slots', () => {
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag>BOOM!<div slot="inner">HERE</div></test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">BOOM! <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
-	});
-
-	it('nested tags', () => {
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag><h2>Nested</h2><div slot="inner">HERE</div></test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content"><h2>Nested</h2> <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
-	});
-
-	it('Unknown slot gets ignored', () => {
-		let tmp = console.warn;
-		console.warn = function() {
-		};
-		el = document.createElement('div');
-		el.innerHTML = '<test-tag><div slot="unknown">HERE</div></test-tag>';
-		document.body.appendChild(el);
-		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></test-tag>');
-		console.warn = tmp;
-	});
-});
-
-
-describe('Component Wrapper shadow true', () => {
+describe('Shadow DOM', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
 	});
 
-	it('without slots', () => {
+	test('without slots', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad></test-shad>';
 		document.body.appendChild(el);
@@ -81,7 +23,7 @@ describe('Component Wrapper shadow true', () => {
 		expect(shadowhtml).toBe('<div><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></div>');
 	});
 
-	it('with just default slot', () => {
+	test('with just default slot', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad>Boom</test-shad>';
 		document.body.appendChild(el);
@@ -90,7 +32,7 @@ describe('Component Wrapper shadow true', () => {
 		expect(el.querySelector('test-shad').innerHTML).toBe('Boom');
 	});
 
-	it('with just inner slot', () => {
+	test('with just inner slot', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad><div slot="inner">HERE</div></test-shad>';
 		document.body.appendChild(el);
@@ -98,15 +40,16 @@ describe('Component Wrapper shadow true', () => {
 		expect(shadowhtml).toBe('<div><h1>Main H1</h1> <div class="content">Main Default <div><slot name="inner"></slot></div></div><!--<TestTag>--></div>');
 	});
 
-	it('both slots', () => {
+	test('both slots', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad>BOOM!<div slot="inner">HERE</div></test-shad>';
 		document.body.appendChild(el);
 		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
+		// TODO: Why does this not produce the inner HERE? Maybe just my ignorance.
 		expect(shadowhtml).toBe('<div><h1>Main H1</h1> <div class="content"><slot></slot> <div><slot name="inner"></slot></div></div><!--<TestTag>--></div>');
 	});
 
-	it('Unknown slot gets ignored', () => {
+	test('Unknown slot gets ignored', () => {
 		let tmp = console.warn;
 		console.warn = function() {
 		};
@@ -118,7 +61,7 @@ describe('Component Wrapper shadow true', () => {
 		console.warn = tmp;
 	});
 
-	it('dynamically adding content to component', async () => {
+	test('dynamically adding content to component', async () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad></test-shad>';
 		document.body.appendChild(el);
