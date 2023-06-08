@@ -46,7 +46,24 @@ describe('Component Wrapper shadow false', () => {
 		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">BOOM! <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
 	});
 
-	// TODO: Unit test to validate that an error occurs when they define a "default" named slot but have remaining unslotted elements left over.
+	// Unit test to validate that an error occurs when they define a "default" named slot but have remaining unslotted elements left over.
+	test('error when named default conflicts with extra remaining content', () => {
+		// Capture errors and ensure only the expected ones appear below.
+		let tmp = console.error;
+		let errors = [];
+		console.error = function(message) {
+			errors.push(message);
+		};
+
+		el = document.createElement('div');
+		el.innerHTML = '<test-tag>Remaining content<div slot="default">Default already set</div></test-tag>';
+		document.body.appendChild(el);
+		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content"><div slot="default">Default already set</div> <div>Inner Default</div></div><!--<TestTag>--></test-tag>');
+		expect(errors).toStrictEqual(['svelteRetag: \'TEST-TAG\': Found elements without slot attribute when using slot="default"']);
+
+		// Revert
+		console.error = tmp;
+	});
 
 	test('inner slot and default slot with other tags', () => {
 		el = document.createElement('div');
