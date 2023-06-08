@@ -130,7 +130,77 @@ describe('Light DOM', () => {
 		expect(normalizeWhitespace(el.innerHTML)).to.equal(normalizeWhitespace(expectRendered));
 	});
 
-	// TODO: Validate that nested slots are working as expected (totally different tags/components)
+	// Validate that nested slots are working as expected even when rendered inside another custom element before that parent
+	// custom element renders, thus causing a disconnectedCallback() forcing the component to re-render (and potentially losing
+	// its slots if not managed properly).
+	test('component state is retained when nested component renders before parent component', () => {
+		const html = `
+			<!-- Declared late -->
+			<outer-tag>
+				<h1>OUTER DEFAULT</h1>
+
+				<!-- Declared already -->
+				<test-tag>
+					<h2>INNER DEFAULT</h2>
+				</test-tag>
+			</outer-tag>
+		`;
+
+		const expectBeforeOuterTag = `
+			<!-- Declared late -->
+			<outer-tag>
+				<h1>OUTER DEFAULT</h1>
+
+				<!-- Declared already -->
+				<test-tag>
+					<h1>Main H1</h1>
+					<div class="content">
+						<h2>INNER DEFAULT</h2>
+						<div>Inner Default</div>
+					</div>
+					<!--<TestTag>-->
+				</test-tag>
+
+			</outer-tag>
+		`;
+
+		const expectAfterOuterTag = `
+			<!-- Declared late -->
+			<outer-tag>
+				<h1>Main H1</h1>
+				<div class="content">
+					<h1>OUTER DEFAULT</h1>
+
+					<!-- Declared already -->
+					<test-tag>
+						<h1>Main H1</h1>
+						<div class="content">
+							<h2>INNER DEFAULT</h2>
+							<div>Inner Default</div>
+						</div>
+						<!--<TestTag>-->
+					</test-tag>
+
+					<div>Inner Default</div>
+				</div>
+				<!--<TestTag>-->
+			</outer-tag>
+		`;
+
+		// Kick off rendering of the already-defined <test-tag> element.
+		el = document.createElement('div');
+		el.innerHTML = html;
+		document.body.appendChild(el);
+
+		// Validate that the outer tag isn't rendered yet.
+		expect(normalizeWhitespace(el.innerHTML)).to.equal(normalizeWhitespace(expectBeforeOuterTag));
+
+		// Define the '<outer-tag>' late now even though
+		svelteRetag({ component: TestTag, tagname: 'outer-tag', shadow: false });
+
+		// Validate that the otuer tag has rendered AND that the inner tag is still intact.
+		expect(normalizeWhitespace(el.innerHTML)).to.equal(normalizeWhitespace(expectAfterOuterTag));
+	});
 
 	test('Unknown slot gets ignored', () => {
 		let tmp = console.warn;
