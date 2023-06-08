@@ -8,7 +8,22 @@ import svelteRetag from '../index.js';
 
 let el = null;
 
-describe('Component Wrapper shadow false', () => {
+/**
+ * Naively strips whitespace from HTML in an attempt to allow us to format human comprehensible HTML whilst ensuring
+ * consistent comparisons during unit tests (since the parser may return whitespace in unexpected places, but equivalent
+ * HTML output).
+ */
+function normalizeWhitespace(html) {
+	html = html.replace(/\s+/g, ' ');
+
+	// Remove space between tags (potentially error prone) TODO: look here in case there are issues in future.
+	html = html.replace(/>\s+</g, '><');
+
+	// Finally, leading/trailing spaces.
+	return html.trim();
+}
+
+describe('Light DOM', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
@@ -72,9 +87,50 @@ describe('Component Wrapper shadow false', () => {
 		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content"><h2>Nested</h2> <div><div slot="inner">HERE</div></div></div><!--<TestTag>--></test-tag>');
 	});
 
-	// TODO: Validate that nested slots are working as expected (totally different tags/components)
+	// Validate that nested slots are working as expected (same tag)
+	test('nested slots, same tag', () => {
+		const html = `
+			<test-tag>
+				<h1>TOP: DEFAULT</h1>
+				<div slot="inner">TOP: INNER NAMED SLOT</div>
 
-	// TODO: Validate that nested slots are working as expected (same tag)
+				<!-- Will be shifted above "inner" -->
+				<test-tag>
+					<h2>NESTED: DEFAULT</h2>
+					<div slot="inner">NESTED: INNER NAMED SLOT</div>
+				</test-tag>
+
+			</test-tag>
+		`;
+		const expectRendered = `
+			<test-tag>
+				<h1>Main H1</h1>
+				<div class="content">
+					<h1>TOP: DEFAULT</h1>
+
+					<!-- Will be shifted above "inner" -->
+					<test-tag>
+						<h1>Main H1</h1>
+						<div class="content">
+							<h2>NESTED: DEFAULT</h2>
+							<div><div slot="inner">NESTED: INNER NAMED SLOT</div></div>
+						</div>
+						<!--<TestTag>-->
+					</test-tag>
+
+					<div><div slot="inner">TOP: INNER NAMED SLOT</div></div>
+				</div>
+				<!--<TestTag>-->
+			</test-tag>
+		`;
+
+		el = document.createElement('div');
+		el.innerHTML = html;
+		document.body.appendChild(el);
+		expect(normalizeWhitespace(el.innerHTML)).to.equal(normalizeWhitespace(expectRendered));
+	});
+
+	// TODO: Validate that nested slots are working as expected (totally different tags/components)
 
 	test('Unknown slot gets ignored', () => {
 		let tmp = console.warn;
