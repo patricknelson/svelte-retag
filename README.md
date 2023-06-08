@@ -64,13 +64,13 @@ to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API
 
 ### Options
 
-| Option     | Default      | Description                                                                                                                                       |
-|------------|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
-| component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                         |
-| tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements)) |
-| attributes | `[]`         | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component)                               |
-| shadow     | `false`      | boolean - Should this component use shadow DOM                                                                                                    |
-| href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).    |
+| Option     | Default      | Description                                                                                                                                                                         |
+|------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                           |
+| tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                   |
+| attributes | `[]`         | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component)                                                                 |
+| shadow     | `false`      | boolean - Should this component use shadow DOM.<br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6. |
+| href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).                                      |
 
 **Note:** For portability, `svelte-retag`'s API is fully backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
