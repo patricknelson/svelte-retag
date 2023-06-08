@@ -41,6 +41,14 @@ function createSvelteSlots(slots) {
 
 
 /**
+ * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
+ * default slot content.
+ *
+ * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
+ */
+
+
+/**
  * @param {object} opts Custom element options
  *
  * @param {any}       opts.component  Svelte component instance to incorporate into your custom element.
@@ -81,18 +89,6 @@ export default function(opts) {
 		connectedCallback() {
 			this.debug('connectedCallback()');
 
-			// Props passed to Svelte component constructor.
-			this.componentProps = {
-				$$scope: {},
-				$$slots: {}, // Here for reference, actually initialized below.
-
-				// All other props are pulled from element attributes (see below).
-			};
-
-			// Populate custom element attributes into the props object.
-			// TODO: Inspect component and normalize to lowercase for Lit-style props (https://github.com/crisward/svelte-tag/issues/16)
-			Array.from(this.attributes).forEach(attr => this.componentProps[attr.name] = attr.value);
-
 			// Setup slot elements, making sure to retain a reference to the original elements prior to processing, so they
 			// can be restored later on disconnectedCallback().
 			this.slotEls = {};
@@ -106,12 +102,11 @@ export default function(opts) {
 				this.mutationObserver.observe(this, { childList: true, subtree: true, attributes: false });
 
 			} else {
-				this.slotEls = this.getSlots();
+				this.slotEls = this.getLightSlots();
 			}
 
-			// TODO: Abstract these two lines so we can re-render based on known good slot elements.
-			this.componentProps.$$slots = createSvelteSlots(this.slotEls);
-			this.componentInstance = new opts.component({ target: this._root, props: this.componentProps });
+			// With available slot elements fetched/initialized, we can render the component now.
+			this.renderSvelteComponent();
 		}
 
 		disconnectedCallback() {
@@ -142,6 +137,38 @@ export default function(opts) {
 					this.appendChild(slotEl);
 				}
 			}
+		}
+
+		/**
+		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
+		 * (with slots initialized elsewhere).
+		 *
+		 * TODO: Future optimization: Consider immediately invoking and then throttling subsequent requests. Useful on
+		 *  initial parse to reduce unnecessary re-rendering. Unit test would need to account for this delay.
+		 */
+		renderSvelteComponent() {
+			this.debug('renderSvelteComponent()');
+
+			// On each rerender, we have to reset our root container since Svelte will just append to our target.
+			this._root.innerHTML = '';
+
+			// Props passed to Svelte component constructor.
+			let props = {
+				$$scope: {},
+
+				// Convert our list of slots into Svelte-specific slot objects
+				$$slots: createSvelteSlots(this.slotEls),
+
+				// All other props are pulled from element attributes (see below)...
+			};
+
+			// Populate custom element attributes into the props object.
+			// TODO: Inspect component and normalize to lowercase for Lit-style props (https://github.com/crisward/svelte-tag/issues/16)
+			Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value);
+
+			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
+			// in the shadow DOM.
+			this.componentInstance = new opts.component({ target: this._root, props: props });
 		}
 
 		/**
@@ -187,7 +214,14 @@ export default function(opts) {
 			return (slotParent === this);
 		}
 
-		getSlots() {
+		/**
+		 * Returns a map of slot names and the corresponding HTMLElement (named slots) or DocumentFragment (default slots).
+		 *
+		 * IMPORTANT: Since this custom element is the "root", these slots must be removed (which is done in THIS method).
+		 *
+		 * @returns {SlotList}
+		 */
+		getLightSlots() {
 			let slots = {};
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
@@ -215,12 +249,16 @@ export default function(opts) {
 				} else {
 					slots.default = this.unwrap(this);
 				}
-				this.innerHTML = '';
 			}
 
 			return slots;
 		}
 
+		/**
+		 * Fetches and returns references to the existing shadow DOM slots. Left unmodified.
+		 *
+		 * @returns {SlotList}
+		 */
 		getShadowSlots() {
 			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
@@ -256,16 +294,14 @@ export default function(opts) {
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
 
-					// Fetch slots again and see if there has been a change in the number of slots. If so, re-render.
+					// Fetch slots again and see if there has been a change in the number of slots. If so, rerender.
 					let slots = this.getShadowSlots(); // TODO: Can probably branch here and do light DOM init as well.
 					if (this.slotCount !== Object.keys(slots).length) {
 						// Retain a reference these slots for render now so we can unwind them on disconnectedCallback().
 						this.slotEls = slots;
-						this.componentProps.$$slots = createSvelteSlots(this.slotEls);
 
-						// On each re-render, we have to reset our root container since Svelte will just append to our target.
-						this._root.innerHTML = '';
-						this.componentInstance = new opts.component({ target: this._root, props: this.componentProps });
+						// Force a rerender now.
+						this.renderSvelteComponent();
 					}
 				}
 			}

@@ -212,4 +212,8 @@ describe('Light DOM', () => {
 		expect(el.innerHTML).toBe('<test-tag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></test-tag>');
 		console.warn = tmp;
 	});
+
+
+	// TODO: Test to validate that newly added slots affect rendered component content (for https://github.com/patricknelson/svelte-retag/issues/7)
+
 });
