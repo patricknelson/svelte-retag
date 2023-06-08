@@ -1,44 +1,4 @@
-/**
- * Please see README.md for usage information.
- *
- * TODO: Better JSDoc type hinting for arguments and return types
- */
-
-import { detach, insert, noop } from 'svelte/internal';
-
-
-/**
- * Creates an object where each property represents the slot name and each value represents a Svelte-specific slot
- * object containing the lifecycle hooks for each slot. This wraps our slot elements and is passed to Svelte itself.
- *
- * Much of this witchcraft is from svelte issue - https://github.com/sveltejs/svelte/issues/2588
- */
-function createSvelteSlots(slots) {
-	const svelteSlots = {};
-	for(const slotName in slots) {
-		svelteSlots[slotName] = [createSlotFn(slots[slotName])];
-	}
-
-	function createSlotFn(element) {
-		return function() {
-			return {
-				c: noop,
-				m: function mount(target, anchor) {
-					insert(target, element.cloneNode(true), anchor);
-				},
-				d: function destroy(detaching) {
-					if (detaching) {
-						detach(element);
-					}
-				},
-				l: noop,
-			};
-		};
-	}
-
-	return svelteSlots;
-}
-
+import { createSvelteSlots, unwrap, findSlotParent } from './utils.js';
 
 /**
  * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
@@ -47,8 +7,9 @@ function createSvelteSlots(slots) {
  * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
  */
 
-
 /**
+ * Please see README.md for usage information.
+ *
  * @param {object} opts Custom element options
  *
  * @param {any}       opts.component  Svelte component instance to incorporate into your custom element.
@@ -63,7 +24,7 @@ export default function(opts) {
 		constructor() {
 			super();
 
-			this.debug('constructor()');
+			this._debug('constructor()');
 			let root = opts.shadow ? this.attachShadow({ mode: 'open' }) : this;
 
 			// Link generated style (shadow root only). Do early as possible to ensure we start downloading CSS (reduces FOUC).
@@ -82,35 +43,47 @@ export default function(opts) {
 			}
 		}
 
+		/**
+		 * Attributes we're watching for changes after render (doesn't affect attributes already present prior to render).
+		 *
+		 * @returns string[]
+		 */
 		static get observedAttributes() {
 			return opts.attributes || [];
 		}
 
+		/**
+		 * Attached to DOM.
+		 */
 		connectedCallback() {
-			this.debug('connectedCallback()');
+			this._debug('connectedCallback()');
 
 			// Setup slot elements, making sure to retain a reference to the original elements prior to processing, so they
 			// can be restored later on disconnectedCallback().
 			this.slotEls = {};
 			if (opts.shadow) {
-				this.slotEls = this.getShadowSlots();
+				this.slotEls = this._getShadowSlots();
 
 				// TODO: Abstract this for reuse in light DOM as well.
 				this.mutationObserver = new MutationObserver((mutations) => {
-					this.processMutations(mutations);
+					this._processMutations(mutations);
 				});
 				this.mutationObserver.observe(this, { childList: true, subtree: true, attributes: false });
 
 			} else {
-				this.slotEls = this.getLightSlots();
+				this.slotEls = this._getLightSlots();
 			}
 
 			// With available slot elements fetched/initialized, we can render the component now.
 			this.renderSvelteComponent();
 		}
 
+		/**
+		 * Removed from DOM (could be called inside another custom element that starts rendering after this one). In that
+		 * situation, the connectedCallback() will be executed again (most likely with constructor() as well, unfortunately).
+		 */
 		disconnectedCallback() {
-			this.debug('disconnectedCallback()');
+			this._debug('disconnectedCallback()');
 
 			if (this.mutationObserver) {
 				this.mutationObserver.disconnect();
@@ -140,6 +113,21 @@ export default function(opts) {
 		}
 
 		/**
+		 * Forward modifications to element attributes to the corresponding Svelte prop.
+		 *
+		 * @param {string} name
+		 * @param {string} oldValue
+		 * @param {string} newValue
+		 */
+		attributeChangedCallback(name, oldValue, newValue) {
+			this._debug('attributes changed', { name, oldValue, newValue });
+
+			if (this.componentInstance && newValue !== oldValue) {
+				this.componentInstance.$set({ [name]: newValue });
+			}
+		}
+
+		/**
 		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
 		 * (with slots initialized elsewhere).
 		 *
@@ -147,7 +135,11 @@ export default function(opts) {
 		 *  initial parse to reduce unnecessary re-rendering. Unit test would need to account for this delay.
 		 */
 		renderSvelteComponent() {
-			this.debug('renderSvelteComponent()');
+			this._debug('renderSvelteComponent()');
+			if (!this.slotEls) {
+				console.warn(`svelteRetag: '${this.tagName}': renderSvelteComponent() called before slot elements have been initialized. Did connectedCallback() complete successfully?`);
+				return;
+			}
 
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
 			this._root.innerHTML = '';
@@ -172,44 +164,13 @@ export default function(opts) {
 		}
 
 		/**
-		 * Carefully "unwraps" the custom element tag itself from its default slot content (particularly if that content
-		 * is just a text node). Only used when not using shadow root.
-		 *
-		 * @param {HTMLElement} from
-		 *
-		 * @returns {DocumentFragment}
-		 */
-		unwrap(from) {
-			let node = document.createDocumentFragment();
-			while(from.firstChild) {
-				node.appendChild(from.firstChild);
-			}
-			return node;
-		}
-
-		/**
-		 * Traverses DOM to find the first custom element that the provided <slot> element happens to belong to.
-		 *
-		 * @param {Element} slot
-		 * @returns {HTMLElement|null}
-		 */
-		findSlotParent(slot) {
-			let parentEl = slot.parentElement;
-			while(parentEl) {
-				if (parentEl.tagName.indexOf('-') !== -1) return parentEl;
-				parentEl = parentEl.parentElement;
-			}
-			return null;
-		}
-
-		/**
 		 * Indicates if the provided <slot> element instance belongs to this custom element or not.
 		 *
 		 * @param {Element} slot
 		 * @returns {boolean}
 		 */
-		isOwnSlot(slot) {
-			let slotParent = this.findSlotParent(slot);
+		_isOwnSlot(slot) {
+			let slotParent = findSlotParent(slot);
 			if (slotParent === null) return false;
 			return (slotParent === this);
 		}
@@ -221,14 +182,14 @@ export default function(opts) {
 		 *
 		 * @returns {SlotList}
 		 */
-		getLightSlots() {
+		_getLightSlots() {
 			let slots = {};
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			for(let candidate of queryNamedSlots) {
 				// Skip this slot if it doesn't happen to belong to THIS custom element.
-				if (!this.isOwnSlot(candidate)) continue;
+				if (!this._isOwnSlot(candidate)) continue;
 
 				slots[candidate.slot] = candidate;
 				// TODO: Potentially problematic in edge cases where the browser may *oddly* return slots from query selector
@@ -247,7 +208,7 @@ export default function(opts) {
 					// Edge case: User has a named "default" as well as remaining HTML left over. Use same error as Svelte.
 					console.error(`svelteRetag: '${this.tagName}': Found elements without slot attribute when using slot="default"`);
 				} else {
-					slots.default = this.unwrap(this);
+					slots.default = unwrap(this);
 				}
 			}
 
@@ -259,7 +220,7 @@ export default function(opts) {
 		 *
 		 * @returns {SlotList}
 		 */
-		getShadowSlots() {
+		_getShadowSlots() {
 			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
 			let htmlLength = this.innerHTML.length;
@@ -285,17 +246,21 @@ export default function(opts) {
 			return Object.keys(this.slotEls).length;
 		}
 
-		// TODO: Primarily used only for shadow DOM, however, MutationObserver would likely also be useful for IIFE-based
-		//  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
-		//  during initial browser parsing and before the closing tag is encountered.
-		processMutations(mutations) {
-			this.debug('processMutations()');
+		/**
+		 * TODO: Primarily used only for shadow DOM, however, MutationObserver would likely also be useful for IIFE-based
+		 *  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
+		 *  during initial browser parsing and before the closing tag is encountered.
+		 *
+		 * @param {MutationRecord[]} mutations
+		 */
+		_processMutations(mutations) {
+			this._debug('_processMutations()');
 
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
 
 					// Fetch slots again and see if there has been a change in the number of slots. If so, rerender.
-					let slots = this.getShadowSlots(); // TODO: Can probably branch here and do light DOM init as well.
+					let slots = this._getShadowSlots(); // TODO: Can probably branch here and do light DOM init as well.
 					if (this.slotCount !== Object.keys(slots).length) {
 						// Retain a reference these slots for render now so we can unwind them on disconnectedCallback().
 						this.slotEls = slots;
@@ -308,27 +273,12 @@ export default function(opts) {
 		}
 
 		/**
-		 * Forward modifications to element attributes to the corresponding Svelte prop.
-		 *
-		 * @param {string} name
-		 * @param {string} oldValue
-		 * @param {string} newValue
-		 */
-		attributeChangedCallback(name, oldValue, newValue) {
-			this.debug('attributes changed', { name, oldValue, newValue });
-
-			if (this.componentInstance && newValue !== oldValue) {
-				this.componentInstance.$set({ [name]: newValue });
-			}
-		}
-
-		/**
 		 * Pass through to console.log() but includes a reference to the custom element in the log for easier targeting for
 		 * debugging purposes.
 		 *
 		 * @param {...*}
 		 */
-		debug() {
+		_debug() {
 			if (opts.debugMode) {
 				console.log.apply(null, [this, ...arguments]);
 			}
