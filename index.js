@@ -100,14 +100,10 @@ export default function(opts) {
 			}
 
 			if (!opts.shadow) {
-				// Go through originally removed slots and restore back to the custom element. This is necessary in case
-				// we're just being appended elsewhere in the DOM (likely if we're nested under another custom element
-				// that initializes after this custom element, thus causing *another* round of construct/connectedCallback
-				// on this one).
-				for(let slotName in this.slotEls) {
-					let slotEl = this.slotEls[slotName];
-					this.appendChild(slotEl);
-				}
+				// Restore slots back to the light DOM in case we're just being appended elsewhere (likely if we're nested under
+				// another custom element that initializes after this custom element, thus causing *another* round of
+				// construct/connectedCallback on this one).
+				this._restoreLightSlots();
 			}
 		}
 
@@ -208,11 +204,28 @@ export default function(opts) {
 					// Edge case: User has a named "default" as well as remaining HTML left over. Use same error as Svelte.
 					console.error(`svelteRetag: '${this.tagName}': Found elements without slot attribute when using slot="default"`);
 				} else {
+					// TODO: If not careful (cleaned up) and run after already having rendered svelte component, this could contain the components HTML.
 					slots.default = unwrap(this);
 				}
 			}
 
 			return slots;
+		}
+
+		/**
+		 * Go through originally removed slots and restore back to the custom element.
+		 */
+		_restoreLightSlots() {
+			// In case we're mid-parse (document.readyState===loading) and the Svelte component has already rendered inside
+			// this element.
+			this.innerHTML = '';
+
+			for(let slotName in this.slotEls) {
+				let slotEl = this.slotEls[slotName];
+				this.appendChild(slotEl);
+			}
+
+			// TODO: reset this.slotEls?
 		}
 
 		/**
