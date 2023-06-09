@@ -40,6 +40,17 @@ export default function(opts) {
 				root.appendChild(this._root);
 			} else {
 				this._root = root;
+
+				// Setup the special <svelte-retag> wrapper if not already present (which can happen when
+				// disconnected/reconnected due to being in a slot).
+				// TODO: Not 100% sure why the tag remains despite this.innerHTML being reset, so this is a workaround for now...
+				let firstChild = this.firstElementChild;
+				if (firstChild instanceof HTMLElement && firstChild.tagName === 'SVELTE-RETAG') {
+					this._root = firstChild;
+				} else {
+					this._root = document.createElement('svelte-retag');
+					this.prepend(this._root);
+				}
 			}
 
 			// Setup our slot observer now so we can watch for changes to slot elements later (if needed).
@@ -187,6 +198,11 @@ export default function(opts) {
 			// Since we must remove slots from the DOM, take a snapshot of the entire contents now prior to removal + render.
 			this.slotHtmlSnapshot = this.innerHTML;
 
+
+			/***************
+			 * NAMED SLOTS *
+			 ***************/
+
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			for(let candidate of queryNamedSlots) {
@@ -202,16 +218,46 @@ export default function(opts) {
 				this.removeChild(candidate);
 			}
 
-			// Default slots are indeed allowed alongside named slots, as long as the named slots are elided *first*. We
-			// should also make sure we trim out whitespace in case all slots and elements are already removed. We don't want
-			// to accidentally pass content (whitespace) to a component that isn't setup with a default slot.
-			if (this.innerHTML.trim().length !== 0) {
+
+			/**************************
+			 * DEFAULT SLOT (UNNAMED) *
+			 **************************/
+
+			// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
+			// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
+			let fragment = document.createDocumentFragment();
+
+			// Important: The conversion of these children to an array is necessary since we are actually modifying the list by calling .appendChild().
+			let childNodes = [...this.childNodes];
+			let childHTML = '';
+			for(let childNode of childNodes) {
+				if (childNode instanceof HTMLElement && childNode.tagName === 'SVELTE-RETAG') {
+					this._debug('_getLightSlots(): skipping <svelte-retag> container');
+					continue;
+				}
+
+				// Unfortunately, we must manually build HTML because DocumentFragment can be problematic with this:
+				// 1. Deep clone is required in order to put it into another HTMLElement, might be slow
+				// 2. Deep clone doesn't work in unit tests
+				if (childNode instanceof Text) {
+					childHTML += childNode.textContent;
+				} else if (childNode.innerHTML) {
+					childHTML += childNode.outerHTML;
+				}
+
+				fragment.appendChild(childNode);
+			}
+
+			// Now that we've rebuilt the default slot content, it could actually be empty (or just whitespace). So, we
+			// have to check the HTML in the fragment to see if it has anything in it before trying to use it.
+			if (childHTML.trim() !== '') {
+				// Now that we've detected remaining content, we've got to make suer we don't already have an explicitly
+				// named "default" slot. If one does exist, then we have a conflict.
 				if (slots.default) {
 					// Edge case: User has a named "default" as well as remaining HTML left over. Use same error as Svelte.
 					console.error(`svelteRetag: '${this.tagName}': Found elements without slot attribute when using slot="default"`);
 				} else {
-					// TODO: If not careful (cleaned up) and run after already having rendered svelte component, this could contain the components HTML.
-					slots.default = unwrap(this);
+					slots.default = fragment;
 				}
 			}
 
@@ -285,6 +331,8 @@ export default function(opts) {
 				}
 			}
 
+			// TODO: WIP: Light DOM
+			if (!opts.shadow) return;
 
 			if (rerender) {
 				// Force a rerender now.
@@ -304,6 +352,16 @@ export default function(opts) {
 				console.log.apply(null, [this, ...arguments]);
 			}
 		}
+	}
+
+	// Special custom element container used to wrap Svelte components. This is used to help emulate some of the
+	// encapsulation benefits of a shadow DOM, particularly when we need to watch slots being dynamically added to the
+	// defined custom element (adjacent to <svelte-retag>). This is especially useful if we're executing early (e.g. via
+	// IIFE) and slots are being actively parsed.
+	if (!window.customElements.get('svelte-retag')) {
+		window.customElements.define('svelte-retag', class extends HTMLElement {
+			// noop.
+		});
 	}
 
 	window.customElements.define(opts.tagname, Wrapper);
