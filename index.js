@@ -41,6 +41,11 @@ export default function(opts) {
 			} else {
 				this._root = root;
 			}
+
+			// Setup our slot observer now so we can watch for changes to slot elements later (if needed).
+			this.slotObserver = new MutationObserver((mutations) => {
+				this._processSlotMutations(mutations);
+			});
 		}
 
 		/**
@@ -63,15 +68,10 @@ export default function(opts) {
 			this.slotEls = {};
 			if (opts.shadow) {
 				this.slotEls = this._getShadowSlots();
-
-				// TODO: Abstract this for reuse in light DOM as well.
-				this.mutationObserver = new MutationObserver((mutations) => {
-					this._processMutations(mutations);
-				});
-				this.mutationObserver.observe(this, { childList: true, subtree: true, attributes: false });
-
+				this._observeSlots(true);
 			} else {
 				this.slotEls = this._getLightSlots();
+				// TODO: Enable for light DOM if document.readyState === 'loading'? (i.e. parsing)
 			}
 
 			// With available slot elements fetched/initialized, we can render the component now.
@@ -85,12 +85,11 @@ export default function(opts) {
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
 
-			if (this.mutationObserver) {
-				this.mutationObserver.disconnect();
-			}
+			// Disconnect slot mutation observer (if it's currently active).
+			this._observeSlots(false);
 
 			// Double check that element has been initialized already. This could happen in case connectedCallback() hasn't
-			// fully completed yet (e.g. if initialization is async) TODO: May happen later if MutationObserver is setup for light DOM
+			// fully completed yet (e.g. if initialization is async)
 			if (this.componentInstance) {
 				try {
 					// Clean up: Destroy Svelte component when removed from DOM.
@@ -249,14 +248,31 @@ export default function(opts) {
 		}
 
 		/**
+		 * Toggle on/off the MutationObserver used to watch for changes in child slots.
+		 */
+		_observeSlots(begin = true) {
+			if (begin) {
+				// TODO: Light DOM: Consider setting this up ONLY while document.readyState === loading
+
+				// TODO: Subtree: Typically, slots (both default and named) are only ever added directly below. So, keeping
+				//  subtree false for now since this could be important for light DOM.
+				this.slotObserver.observe(this, { childList: true, subtree: false, attributes: false });
+			} else {
+				this.slotObserver.disconnect();
+			}
+
+			this.slotObserverActive = begin;
+		}
+
+		/**
 		 * TODO: Primarily used only for shadow DOM, however, MutationObserver would likely also be useful for IIFE-based
 		 *  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
 		 *  during initial browser parsing and before the closing tag is encountered.
 		 *
 		 * @param {MutationRecord[]} mutations
 		 */
-		_processMutations(mutations) {
-			this._debug('_processMutations()');
+		_processSlotMutations(mutations) {
+			this._debug('_processSlotMutations()');
 
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
