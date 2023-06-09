@@ -44,6 +44,8 @@ export function createSvelteSlots(slots) {
  * Carefully "unwraps" the custom element tag itself from its default slot content (particularly if that content
  * is just a text node). Only used when not using shadow root.
  *
+ * TODO: Remove is this stays unused.
+ *
  * @param {HTMLElement} from
  *
  * @returns {DocumentFragment}

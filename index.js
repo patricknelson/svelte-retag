@@ -1,4 +1,4 @@
-import { createSvelteSlots, unwrap, findSlotParent } from './utils.js';
+import { createSvelteSlots, findSlotParent } from './utils.js';
 
 /**
  * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
