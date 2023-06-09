@@ -25,31 +25,19 @@ export default function(opts) {
 			super();
 
 			this._debug('constructor()');
-			let root = opts.shadow ? this.attachShadow({ mode: 'open' }) : this;
 
-			// Link generated style (shadow root only). Do early as possible to ensure we start downloading CSS (reduces FOUC).
-			if (opts.href && opts.shadow) {
-				let link = document.createElement('link');
-				link.setAttribute('href', opts.href);
-				link.setAttribute('rel', 'stylesheet');
-				root.appendChild(link);
-			}
-
+			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
+				this.attachShadow({ mode: 'open' });
 				this._root = document.createElement('div');
-				root.appendChild(this._root);
-			} else {
-				this._root = root;
+				this.shadowRoot.appendChild(this._root);
 
-				// Setup the special <svelte-retag> wrapper if not already present (which can happen when
-				// disconnected/reconnected due to being in a slot).
-				// TODO: Not 100% sure why the tag remains despite this.innerHTML being reset, so this is a workaround for now...
-				let firstChild = this.firstElementChild;
-				if (firstChild instanceof HTMLElement && firstChild.tagName === 'SVELTE-RETAG') {
-					this._root = firstChild;
-				} else {
-					this._root = document.createElement('svelte-retag');
-					this.prepend(this._root);
+				// Link generated style. Do early as possible to ensure we start downloading CSS (reduces FOUC).
+				if (opts.href) {
+					let link = document.createElement('link');
+					link.setAttribute('href', opts.href);
+					link.setAttribute('rel', 'stylesheet');
+					this.shadowRoot.appendChild(link);
 				}
 			}
 
@@ -73,6 +61,19 @@ export default function(opts) {
 		 */
 		connectedCallback() {
 			this._debug('connectedCallback()');
+
+			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
+			// disconnected/reconnected due to being in a slot).
+			// TODO: Not 100% sure why the tag remains despite this.innerHTML being reset, so this is a workaround for now...
+			if (!opts.shadow) {
+				let firstChild = this.firstElementChild;
+				if (firstChild instanceof HTMLElement && firstChild.tagName === 'SVELTE-RETAG') {
+					this._root = firstChild;
+				} else {
+					this._root = document.createElement('svelte-retag');
+					this.prepend(this._root);
+				}
+			}
 
 			// Watch for changes to slot elements and ensure they're reflected in the Svelte component.
 			// TODO: WIP: Currently only applies to shadow DOM mode.
