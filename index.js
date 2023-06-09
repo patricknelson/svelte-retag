@@ -20,7 +20,28 @@ import { createSvelteSlots, findSlotParent } from './utils.js';
  * @param {boolean?}  opts.debugMode  Hidden option to enable debugging for package development purposes.
  */
 export default function(opts) {
-	class Wrapper extends HTMLElement {
+	/**
+	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
+	 *
+	 * When performing light DOM rendering, this provides the opportunity to isolate the slot content away from the HTML
+	 * rendered by the component itself. This is particularly necessary if we're executing early (e.g. via IIFE formatted
+	 * bundles and not via native ESM modules, which are deferred) since we need to rerender the component as the parser
+	 * progresses along the current element's slot content. This ultimately reduces (if not eliminates) the typical
+	 * cumulative layout shift (CLS) seen when injecting components into the DOM like this (especially noticeable on
+	 * initial page loads). That CLS typically occurs because ESM modules are deferred (as noted above) but also because
+	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
+	 * us.
+	 */
+	if (!window.customElements.get('svelte-retag')) {
+		window.customElements.define('svelte-retag', class extends HTMLElement {
+			// noop.
+		});
+	}
+
+	/**
+	 * Defines the actual custom element responsible for rendering the provided Svelte component.
+	 */
+	window.customElements.define(opts.tagname, class extends HTMLElement {
 		constructor() {
 			super();
 
@@ -395,27 +416,5 @@ export default function(opts) {
 				console.log.apply(null, [this, ...arguments]);
 			}
 		}
-	}
-
-
-	/**
-	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
-	 *
-	 * When performing light DOM rendering, this provides the opportunity to isolate the slot content away from the HTML
-	 * rendered by the component itself. This is particularly necessary if we're executing early (e.g. via IIFE formatted
-	 * bundles and not via native ESM modules, which are deferred) since we need to rerender the component as the parser
-	 * progresses along the current element's slot content. This ultimately reduces (if not eliminates) the typical
-	 * cumulative layout shift (CLS) seen when injecting components into the DOM like this (especially noticeable on
-	 * initial page loads). That CLS typically occurs because ESM modules are deferred (as noted above) but also because
-	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
-	 * us.
-	 */
-	if (!window.customElements.get('svelte-retag')) {
-		window.customElements.define('svelte-retag', class extends HTMLElement {
-			// noop.
-		});
-	}
-
-
-	window.customElements.define(opts.tagname, Wrapper);
+	});
 }
