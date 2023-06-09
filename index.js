@@ -183,6 +183,7 @@ export default function(opts) {
 		 * @returns {SlotList}
 		 */
 		_getLightSlots() {
+			this._debug('_getLightSlots(), existing slots:', this.slotEls);
 			let slots = {};
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
@@ -221,6 +222,7 @@ export default function(opts) {
 		 * @returns {SlotList}
 		 */
 		_getShadowSlots() {
+			this._debug('_getShadowSlots()');
 			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
 			let htmlLength = this.innerHTML.length;
