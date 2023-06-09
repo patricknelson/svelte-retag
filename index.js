@@ -75,12 +75,23 @@ export default function(opts) {
 				}
 			}
 
+			// Initialize the slot elements object which retains a reference to the original elements (by slot name) so they
+			// can be restored later on disconnectedCallback(). Also useful for debugging purposes.
+			this.slotEls = {};
+
 			// Watch for changes to slot elements and ensure they're reflected in the Svelte component.
-			// TODO: WIP: Currently only applies to shadow DOM mode.
 			if (opts.shadow) {
 				this._observeSlots(true);
 			} else {
-				//this._observeSlots(true); // TODO: WIP
+				if (document.readyState === 'loading') {
+					// Setup the mutation observer to watch content as parser progresses through the HTML and adds nodes under
+					// this element. However, since this is only useful in light DOM elements *during* parsing, we should be sure
+					// to stop observing once the HTML is fully parsed and loaded.
+					this._observeSlots(true);
+					document.addEventListener('DOMContentLoaded', () => {
+						this._observeSlots(false);
+					});
+				}
 			}
 
 			// Now that we're connected to the DOM, we can render the component now.
@@ -143,12 +154,10 @@ export default function(opts) {
 
 			// Fetch the latest set of available slot elements to use in the render. For light DOM, this must be done prior
 			// to clearing inner HTML below since the slots exist there.
-			let slotEls = {};
 			if (opts.shadow) {
-				slotEls = this._getShadowSlots();
-				this._observeSlots(true);
+				this.slotEls = this._getShadowSlots();
 			} else {
-				slotEls = this._getLightSlots();
+				this.slotEls = this._getLightSlots();
 			}
 
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
@@ -159,7 +168,7 @@ export default function(opts) {
 				$$scope: {},
 
 				// Convert our list of slots into Svelte-specific slot objects
-				$$slots: createSvelteSlots(slotEls),
+				$$slots: createSvelteSlots(this.slotEls),
 
 				// All other props are pulled from element attributes (see below)...
 			};
@@ -195,9 +204,6 @@ export default function(opts) {
 		_getLightSlots() {
 			this._debug('_getLightSlots()');
 			let slots = {};
-
-			// Since we must remove slots from the DOM, take a snapshot of the entire contents now prior to removal + render.
-			this.slotHtmlSnapshot = this.innerHTML;
 
 
 			/***************
@@ -269,7 +275,16 @@ export default function(opts) {
 		 * Go through originally removed slots and restore back to the custom element.
 		 */
 		_restoreLightSlots() {
-			this.innerHTML = this.slotHtmlSnapshot;
+			this._debug('_restoreLightSlots:', this.slotHtmlSnapshot);
+
+			for(let slotName in this.slotEls) {
+				let slotEl = this.slotEls[slotName];
+				this.appendChild(slotEl);
+			}
+
+			// Since the slots are back in the original element, we should clean  up our reference to them. This is because,
+			// symbolically and semantically at least, we think of this variable as a holding area ONCE they've been removed.
+			this.slotEls = {};
 		}
 
 		/**
@@ -296,15 +311,20 @@ export default function(opts) {
 		/**
 		 * Toggle on/off the MutationObserver used to watch for changes in child slots.
 		 */
-		_observeSlots(begin = true) {
+		_observeSlots(begin) {
+			// While MutationObserver de-duplicates requests for us, this helps us with reducing noise while debugging.
+			if (begin === this.slotObserverActive) return;
+
 			if (begin) {
 				// TODO: Light DOM: Consider setting this up ONLY while document.readyState === loading
 
 				// TODO: Subtree: Typically, slots (both default and named) are only ever added directly below. So, keeping
 				//  subtree false for now since this could be important for light DOM.
 				this.slotObserver.observe(this, { childList: true, subtree: false, attributes: false });
+				this._debug('_observeSlots: OBSERVE');
 			} else {
 				this.slotObserver.disconnect();
+				this._debug('_observeSlots: DISCONNECT');
 			}
 
 			this.slotObserverActive = begin;
@@ -318,22 +338,31 @@ export default function(opts) {
 		 * @param {MutationRecord[]} mutations
 		 */
 		_processSlotMutations(mutations) {
-			this._debug('_processSlotMutations()');
+			this._debug('_processSlotMutations()', mutations);
 
 			// Rerender if one of the mutations is of a child element.
-			// TODO: Light DOM: Problematic if this is coming from Svelte itself.
+			// TODO: 🚨 WIP 🚨
 			let rerender = false;
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
 					rerender = true;
-					this._debug('mutation.removedNodes:', mutation.removedNodes);
-					this._debug('mutation.addedNodes:', mutation.addedNodes);
-					break;
+
+					//if (mutation.removedNodes.length > 0) this._debug('removedNodes', ...mutation.removedNodes);
+					//if (mutation.addedNodes.length > 0) this._debug('addedNodes', ...mutation.addedNodes);
+
+					// TODO: WIP DEBUGGING
+					for(let addedNode of mutation.addedNodes) {
+						this._debug('addedNode', addedNode);
+						if (addedNode instanceof HTMLElement) {
+							this._debug('addedNode.innerHTML:', addedNode.innerHTML);
+						}
+					}
 				}
 			}
 
-			// TODO: WIP: Light DOM
-			if (!opts.shadow) return;
+			if (!opts.shadow) {
+				rerender = false; // TODO: 🚨 WIP 🚨
+			}
 
 			if (rerender) {
 				// Force a rerender now.
