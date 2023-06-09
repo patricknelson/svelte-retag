@@ -61,11 +61,6 @@ export default function(opts) {
 					this.shadowRoot.appendChild(link);
 				}
 			}
-
-			// Setup our slot observer now so we can watch for changes to slot elements later (if needed).
-			this.slotObserver = new MutationObserver((mutations) => {
-				this._processSlotMutations(mutations);
-			});
 		}
 
 		/**
@@ -116,7 +111,7 @@ export default function(opts) {
 			}
 
 			// Now that we're connected to the DOM, we can render the component now.
-			this.renderSvelteComponent();
+			this._renderSvelteComponent();
 		}
 
 		/**
@@ -170,10 +165,11 @@ export default function(opts) {
 		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
 		 * (with slots initialized elsewhere).
 		 *
-		 * TODO: Future optimization: Consider immediately invoking and then throttling subsequent requests. Useful on
-		 *  initial parse to reduce unnecessary re-rendering. Unit test would need to account for this delay.
+		 * NOTE: Despite the intuitive name, this method is private since its functionality requires a deeper understanding
+		 * of how it depends on current internal state and how it alters internal state. Be sure to study how it's called
+		 * before calling it yourself externally. 🔥🐉
 		 */
-		renderSvelteComponent() {
+		_renderSvelteComponent() {
 			this._debug('renderSvelteComponent()');
 
 			// Fetch the latest set of available slot elements to use in the render. For light DOM, this must be done prior
@@ -342,6 +338,13 @@ export default function(opts) {
 			// While MutationObserver de-duplicates requests for us, this helps us with reducing noise while debugging.
 			if (begin === this.slotObserverActive) return;
 
+			// Setup our slot observer if not done already.
+			if (!this.slotObserver) {
+				this.slotObserver = new MutationObserver((mutations) => {
+					this._processSlotMutations(mutations);
+				});
+			}
+
 			if (begin) {
 				// Subtree: Typically, slots (both default and named) are only ever added directly below. So, keeping
 				// subtree false for now since this could be important for light DOM.
@@ -401,7 +404,7 @@ export default function(opts) {
 
 				// Force a rerender now.
 				this._debug('_processMutations(): Trigger rerender');
-				this.renderSvelteComponent();
+				this._renderSvelteComponent();
 			}
 		}
 
