@@ -63,18 +63,15 @@ export default function(opts) {
 		connectedCallback() {
 			this._debug('connectedCallback()');
 
-			// Setup slot elements, making sure to retain a reference to the original elements prior to processing, so they
-			// can be restored later on disconnectedCallback().
-			this.slotEls = {};
+			// Watch for changes to slot elements and ensure they're reflected in the Svelte component.
+			// TODO: WIP: Currently only applies to shadow DOM mode.
 			if (opts.shadow) {
-				this.slotEls = this._getShadowSlots();
 				this._observeSlots(true);
 			} else {
-				this.slotEls = this._getLightSlots();
 				//this._observeSlots(true); // TODO: WIP
 			}
 
-			// With available slot elements fetched/initialized, we can render the component now.
+			// Now that we're connected to the DOM, we can render the component now.
 			this.renderSvelteComponent();
 		}
 
@@ -131,9 +128,15 @@ export default function(opts) {
 		 */
 		renderSvelteComponent() {
 			this._debug('renderSvelteComponent()');
-			if (!this.slotEls) {
-				console.warn(`svelteRetag: '${this.tagName}': renderSvelteComponent() called before slot elements have been initialized. Did connectedCallback() complete successfully?`);
-				return;
+
+			// Fetch the latest set of available slot elements to use in the render. For light DOM, this must be done prior
+			// to clearing inner HTML below since the slots exist there.
+			let slotEls = {};
+			if (opts.shadow) {
+				slotEls = this._getShadowSlots();
+				this._observeSlots(true);
+			} else {
+				slotEls = this._getLightSlots();
 			}
 
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
@@ -144,7 +147,7 @@ export default function(opts) {
 				$$scope: {},
 
 				// Convert our list of slots into Svelte-specific slot objects
-				$$slots: createSvelteSlots(this.slotEls),
+				$$slots: createSvelteSlots(slotEls),
 
 				// All other props are pulled from element attributes (see below)...
 			};
@@ -178,8 +181,11 @@ export default function(opts) {
 		 * @returns {SlotList}
 		 */
 		_getLightSlots() {
-			this._debug('_getLightSlots(), existing slots:', this.slotEls);
+			this._debug('_getLightSlots()');
 			let slots = {};
+
+			// Since we must remove slots from the DOM, take a snapshot of the entire contents now prior to removal + render.
+			this.slotHtmlSnapshot = this.innerHTML;
 
 			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
@@ -216,16 +222,7 @@ export default function(opts) {
 		 * Go through originally removed slots and restore back to the custom element.
 		 */
 		_restoreLightSlots() {
-			// In case we're mid-parse (document.readyState===loading) and the Svelte component has already rendered inside
-			// this element.
-			this.innerHTML = '';
-
-			for(let slotName in this.slotEls) {
-				let slotEl = this.slotEls[slotName];
-				this.appendChild(slotEl);
-			}
-
-			// TODO: reset this.slotEls?
+			this.innerHTML = this.slotHtmlSnapshot;
 		}
 
 		/**
@@ -247,17 +244,6 @@ export default function(opts) {
 				slots.default = document.createElement('slot');
 			}
 			return slots;
-		}
-
-		/**
-		 * The current number of known slots. This can change over time depending on when this custom element was
-		 * initialized, particularly if defined very early in initial page parsing.
-		 *
-		 * @returns {number}
-		 */
-		get slotCount() {
-			if (this.slotEls) return 0; // Initialized in connectedCallback().
-			return Object.keys(this.slotEls).length;
 		}
 
 		/**
@@ -301,17 +287,8 @@ export default function(opts) {
 
 
 			if (rerender) {
-				// Fetch slots again and rerender.
-				// TODO: Could be consolidated into renderSvelteComponent()?
-				if (opts.shadow) {
-					this.slotEls = this._getShadowSlots();
-				} else {
-					this.slotEls = this._getLightSlots();
-				}
-
-				this._debug('_processMutations(): Trigger rerender');
-
 				// Force a rerender now.
+				this._debug('_processMutations(): Trigger rerender');
 				this.renderSvelteComponent();
 			}
 		}
