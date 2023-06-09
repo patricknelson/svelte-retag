@@ -71,7 +71,7 @@ export default function(opts) {
 				this._observeSlots(true);
 			} else {
 				this.slotEls = this._getLightSlots();
-				// TODO: Enable for light DOM if document.readyState === 'loading'? (i.e. parsing)
+				//this._observeSlots(true); // TODO: WIP
 			}
 
 			// With available slot elements fetched/initialized, we can render the component now.
@@ -287,19 +287,32 @@ export default function(opts) {
 		_processSlotMutations(mutations) {
 			this._debug('_processSlotMutations()');
 
+			// Rerender if one of the mutations is of a child element.
+			// TODO: Light DOM: Problematic if this is coming from Svelte itself.
+			let rerender = false;
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
-
-					// Fetch slots again and see if there has been a change in the number of slots. If so, rerender.
-					let slots = this._getShadowSlots(); // TODO: Can probably branch here and do light DOM init as well.
-					if (this.slotCount !== Object.keys(slots).length) {
-						// Retain a reference these slots for render now so we can unwind them on disconnectedCallback().
-						this.slotEls = slots;
-
-						// Force a rerender now.
-						this.renderSvelteComponent();
-					}
+					rerender = true;
+					this._debug('mutation.removedNodes:', mutation.removedNodes);
+					this._debug('mutation.addedNodes:', mutation.addedNodes);
+					break;
 				}
+			}
+
+
+			if (rerender) {
+				// Fetch slots again and rerender.
+				// TODO: Could be consolidated into renderSvelteComponent()?
+				if (opts.shadow) {
+					this.slotEls = this._getShadowSlots();
+				} else {
+					this.slotEls = this._getLightSlots();
+				}
+
+				this._debug('_processMutations(): Trigger rerender');
+
+				// Force a rerender now.
+				this.renderSvelteComponent();
 			}
 		}
 
