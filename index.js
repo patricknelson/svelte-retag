@@ -62,17 +62,17 @@ export default function(opts) {
 		connectedCallback() {
 			this._debug('connectedCallback()');
 
+			// TODO: Light DOM: Potential optimization opportunities:
+			//  1. Don't bother setup <svelte-retag> wrapper if the component doesn't have a default slot
+			//  2. Don't setup <svelte-retag> wrapper if we don't end up processing mutations (i.e. document not in loading state).
+			//  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
+			//  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
+
 			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
 			// disconnected/reconnected due to being in a slot).
-			// TODO: Not 100% sure why the tag remains despite this.innerHTML being reset, so this is a workaround for now...
 			if (!opts.shadow) {
-				let firstChild = this.firstElementChild;
-				if (firstChild instanceof HTMLElement && firstChild.tagName === 'SVELTE-RETAG') {
-					this._root = firstChild;
-				} else {
-					this._root = document.createElement('svelte-retag');
-					this.prepend(this._root);
-				}
+				this._root = document.createElement('svelte-retag');
+				this.prepend(this._root);
 			}
 
 			// Initialize the slot elements object which retains a reference to the original elements (by slot name) so they
@@ -124,6 +124,9 @@ export default function(opts) {
 				// another custom element that initializes after this custom element, thus causing *another* round of
 				// construct/connectedCallback on this one).
 				this._restoreLightSlots();
+
+				// Lastly, unwinding everything in reverse: Remove the special <svelte-tag> wrapper.
+				this.removeChild(this._root);
 			}
 		}
 
@@ -275,11 +278,14 @@ export default function(opts) {
 		 * Go through originally removed slots and restore back to the custom element.
 		 */
 		_restoreLightSlots() {
-			this._debug('_restoreLightSlots:', this.slotHtmlSnapshot);
+			this._debug('_restoreLightSlots:', this.slotEls);
 
 			for(let slotName in this.slotEls) {
 				let slotEl = this.slotEls[slotName];
-				this.appendChild(slotEl);
+
+				// Prepend back so that in case more default slot content has arrived, we can rebuild it in order. This is
+				// important if we're executing during document.readyState === 'loading' (i.e. IIFE and not module).
+				this.prepend(slotEl);
 			}
 
 			// Since the slots are back in the original element, we should clean  up our reference to them. This is because,
@@ -316,10 +322,8 @@ export default function(opts) {
 			if (begin === this.slotObserverActive) return;
 
 			if (begin) {
-				// TODO: Light DOM: Consider setting this up ONLY while document.readyState === loading
-
-				// TODO: Subtree: Typically, slots (both default and named) are only ever added directly below. So, keeping
-				//  subtree false for now since this could be important for light DOM.
+				// Subtree: Typically, slots (both default and named) are only ever added directly below. So, keeping
+				// subtree false for now since this could be important for light DOM.
 				this.slotObserver.observe(this, { childList: true, subtree: false, attributes: false });
 				this._debug('_observeSlots: OBSERVE');
 			} else {
@@ -331,9 +335,13 @@ export default function(opts) {
 		}
 
 		/**
-		 * TODO: Primarily used only for shadow DOM, however, MutationObserver would likely also be useful for IIFE-based
-		 *  light DOM, since that is not deferred and technically slots will be added after the wrapping tag's connectedCallback()
-		 *  during initial browser parsing and before the closing tag is encountered.
+		 * Watches for slot changes, specifically:
+		 *
+		 * 1. Shadow DOM: All slot changes will trigger a rerender of the Svelte component
+		 *
+		 * 2. Light DOM: Only additions will be accounted for. This is particularly because currently we only support
+		 *    watching for changes during document parsing (i.e. document.readyState === 'loading', prior to the
+		 *    'DOMContentLoaded' event.
 		 *
 		 * @param {MutationRecord[]} mutations
 		 */
@@ -341,30 +349,35 @@ export default function(opts) {
 			this._debug('_processSlotMutations()', mutations);
 
 			// Rerender if one of the mutations is of a child element.
-			// TODO: 🚨 WIP 🚨
 			let rerender = false;
 			for(let mutation of mutations) {
 				if (mutation.type === 'childList') {
-					rerender = true;
-
-					//if (mutation.removedNodes.length > 0) this._debug('removedNodes', ...mutation.removedNodes);
-					//if (mutation.addedNodes.length > 0) this._debug('addedNodes', ...mutation.addedNodes);
-
-					// TODO: WIP DEBUGGING
-					for(let addedNode of mutation.addedNodes) {
-						this._debug('addedNode', addedNode);
-						if (addedNode instanceof HTMLElement) {
-							this._debug('addedNode.innerHTML:', addedNode.innerHTML);
+					// For shadow DOM, it's alright if it's a removal.
+					if (opts.shadow) {
+						rerender = true;
+						break;
+					} else {
+						// For light DOM, it only matters to rerender on newly added nodes. This is because we're only watching for
+						// mutations during initial document parsing. Node removals can happen during the retrieval of light slots in
+						// _getLightSlots(). These are necessary, but may cascade into an infinite loop if we're not very careful here.
+						if (mutation.addedNodes.length > 0) {
+							rerender = true;
+							break;
 						}
 					}
 				}
 			}
 
-			if (!opts.shadow) {
-				rerender = false; // TODO: 🚨 WIP 🚨
-			}
-
 			if (rerender) {
+				if (!opts.shadow) {
+					// For light DOM, ensure original slots are available by prepending them back to the DOM so we can fetch the
+					// latest content. This is important in case the newly visible nodes are part of default content (not just
+					// named slots)
+					this._observeSlots(false);
+					this._restoreLightSlots();
+					this._observeSlots(true);
+				}
+
 				// Force a rerender now.
 				this._debug('_processMutations(): Trigger rerender');
 				this.renderSvelteComponent();
@@ -384,15 +397,25 @@ export default function(opts) {
 		}
 	}
 
-	// Special custom element container used to wrap Svelte components. This is used to help emulate some of the
-	// encapsulation benefits of a shadow DOM, particularly when we need to watch slots being dynamically added to the
-	// defined custom element (adjacent to <svelte-retag>). This is especially useful if we're executing early (e.g. via
-	// IIFE) and slots are being actively parsed.
+
+	/**
+	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
+	 *
+	 * When performing light DOM rendering, this provides the opportunity to isolate the slot content away from the HTML
+	 * rendered by the component itself. This is particularly necessary if we're executing early (e.g. via IIFE formatted
+	 * bundles and not via native ESM modules, which are deferred) since we need to rerender the component as the parser
+	 * progresses along the current element's slot content. This ultimately reduces (if not eliminates) the typical
+	 * cumulative layout shift (CLS) seen when injecting components into the DOM like this (especially noticeable on
+	 * initial page loads). That CLS typically occurs because ESM modules are deferred (as noted above) but also because
+	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
+	 * us.
+	 */
 	if (!window.customElements.get('svelte-retag')) {
 		window.customElements.define('svelte-retag', class extends HTMLElement {
 			// noop.
 		});
 	}
+
 
 	window.customElements.define(opts.tagname, Wrapper);
 }
