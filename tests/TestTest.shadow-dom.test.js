@@ -9,7 +9,7 @@ import { tick } from 'svelte';
 
 let el = null;
 
-describe('Shadow DOM', () => {
+describe('<test-tag> (Shadow DOM)', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });

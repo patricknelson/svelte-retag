@@ -9,15 +9,19 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
 ## Core features
 
-* **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
+* 🌟 **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
 	requiring use of the shadow DOM). Doing so allows you to take full advantage of global styles while still maintaining
 	encapsulation of your component specific styles, utilizing web fonts and so on.
-* **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
+* 🏃‍♂️ **Instant:** Proactively renders the Svelte component _immediately_ into the light DOM as soon as the
+	parser encounters the custom element while dynamically re-rendering slot content as the parser moves along. This
+	reduces CLS (Cumulative Layout Shift) and makes it interactive more quickly _without_ having to wait for the document
+	to finish loading. _(Note: Requires compiling to IIFE format in your rollup config.)_
+* ⚡ **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
 	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
-* **Flexibility:** Allows you to use your component as you normally would within Svelte (`<ExampleComponent />`) _and_
+* ⚙ **Flexibility:** Allows you to use your component as you normally would within Svelte (`<ExampleComponent />`) _and_
 	as a custom element outside of Svelte (`<example-component></example-component>`). You only need to define the
 	components that need to be available as custom elements along with their associated tag names.
-* **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
+* 💼 **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
 	regardless of the stack (great for upgrading legacy applications).
 
 ## Why?
@@ -82,7 +86,7 @@ On the immediate horizon:
 - [x] Migrate to Vitest for unit testing
 - [x] Update logo
 - [x] Fix nested slot support (https://github.com/patricknelson/svelte-retag/pull/5)
-- [ ] ⏳ Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
+- [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [ ] Support Lit-style lowercase props (see https://github.com/crisward/svelte-tag/issues/16)
 - [ ] Lower priority: Support context (see https://github.com/crisward/svelte-tag/issues/8)
