@@ -39,6 +39,15 @@ export default function(opts) {
 		});
 	}
 
+	// Inspect the component early on to get its available properties (statically available).
+	const propInstance = new opts.component({ target: document.createElement('div') });
+	const propMap = new Map();
+	for(let key of Object.keys(propInstance.$$.props)) {
+		propMap.set(key.toLowerCase(), key);
+	}
+	propInstance.$destroy();
+
+
 	/**
 	 * Defines the actual custom element responsible for rendering the provided Svelte component.
 	 */
@@ -157,8 +166,27 @@ export default function(opts) {
 		attributeChangedCallback(name, oldValue, newValue) {
 			this._debug('attributes changed', { name, oldValue, newValue });
 
+			// If instance already available, pass it through immediately.
 			if (this.componentInstance && newValue !== oldValue) {
-				this.componentInstance.$set({ [name]: newValue });
+				let translatedName = this._translateAttribute(name);
+				this.componentInstance.$set({ [translatedName]: newValue });
+			}
+		}
+
+		/**
+		 * Converts the provided lowercase attribute name to the correct case-sensitive component prop name, if possible.
+		 *
+		 * @param {string} attributeName
+		 * @returns {string}
+		 */
+		_translateAttribute(attributeName) {
+			// In the unlikely scenario that a browser somewhere doesn't do this for us (or maybe we're in a quirks mode or something...)
+			attributeName = attributeName.toLowerCase();
+			if (propMap.has(attributeName)) {
+				return propMap.get(attributeName);
+			} else {
+				this._debug(`_translateAttribute(): ${attributeName} not found`);
+				return attributeName;
 			}
 		}
 
@@ -195,8 +223,9 @@ export default function(opts) {
 			};
 
 			// Populate custom element attributes into the props object.
-			// TODO: Inspect component and normalize to lowercase for Lit-style props (https://github.com/crisward/svelte-tag/issues/16)
-			Array.from(this.attributes).forEach(attr => props[attr.name] = attr.value);
+			for(let attr of [...this.attributes]) {
+				props[this._translateAttribute(attr.name)] = attr.value
+			}
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
