@@ -4,7 +4,8 @@
   "description": "Light DOM custom element wrapper for Svelte 3 with Vite HMR support",
   "main": "index.js",
   "scripts": {
-    "test": "vitest run",
+    "test": "npm run eslint && vitest run",
+    "vitest": "vitest run",
     "eslint": "eslint index.js tests/*",
     "pub": "npm run test && npm run eslint && npm publish"
   },
