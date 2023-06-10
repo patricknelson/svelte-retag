@@ -93,7 +93,7 @@ On the immediate horizon:
 - [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [x] Support Lit-style lowercase props (see https://github.com/crisward/svelte-tag/issues/16)
-- [ ] Lower priority: Support context (see https://github.com/crisward/svelte-tag/issues/8)
+- [ ] Lower priority: Support context (see https://github.com/patricknelson/svelte-retag/issues/10)
 
 Milestones:
 
