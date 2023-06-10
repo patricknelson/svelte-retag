@@ -17,7 +17,8 @@ import { createSvelteSlots, findSlotParent } from './utils.js';
  * @param {string[]?} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified.
  * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
  * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
- * @param {boolean?}  opts.debugMode  Hidden option to enable debugging for package development purposes.
+ *
+ * @param {boolean|string?} opts.debugMode Hidden option to enable debugging for package development purposes.
  */
 export default function(opts) {
 	/**
@@ -416,7 +417,11 @@ export default function(opts) {
 		 */
 		_debug() {
 			if (opts.debugMode) {
-				console.log.apply(null, [this, ...arguments]);
+				if (opts.debugMode === 'cli') {
+					console.log.apply(null, [...arguments]);
+				} else {
+					console.log.apply(null, [this, ...arguments]);
+				}
 			}
 		}
 	});

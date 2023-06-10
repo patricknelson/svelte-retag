@@ -1,27 +1,13 @@
 import { describe, beforeAll, afterEach, test, expect } from 'vitest';
 import TestTag from './TestTag.svelte';
-import svelteRetag from '../index.js';
+import svelteRetag from '../index';
+import { normalizeWhitespace } from './test-utils.js';
 
 // See vite.config.js for configuration details.
 
 // TODO: Needs unit tests to validate attributes/props being handled correctly (at minimum pass through)
 
 let el = null;
-
-/**
- * Naively strips whitespace from HTML in an attempt to allow us to format human comprehensible HTML whilst ensuring
- * consistent comparisons during unit tests (since the parser may return whitespace in unexpected places, but equivalent
- * HTML output).
- */
-function normalizeWhitespace(html) {
-	html = html.replace(/\s+/g, ' ');
-
-	// Remove space between tags (potentially error prone) TODO: look here in case there are issues in future.
-	html = html.replace(/>\s+</g, '><');
-
-	// Finally, leading/trailing spaces.
-	return html.trim();
-}
 
 describe('Light DOM', () => {
 
@@ -214,7 +200,7 @@ describe('Light DOM', () => {
 		expect(normalizeWhitespace(el.innerHTML)).to.equal(normalizeWhitespace(expectAfterOuterTag));
 	});
 
-	test('Unknown slot gets ignored', () => {
+	test('unknown slot gets ignored', () => {
 		let tmp = console.warn;
 		console.warn = function() {
 		};
