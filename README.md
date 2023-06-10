@@ -92,7 +92,7 @@ On the immediate horizon:
 - [x] Fix nested slot support (https://github.com/patricknelson/svelte-retag/pull/5)
 - [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
-- [x] Support Lit-style lowercase props (see https://github.com/crisward/svelte-tag/issues/16)
+- [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
 - [ ] Lower priority: Support context (see https://github.com/patricknelson/svelte-retag/issues/10)
 
 Milestones:
