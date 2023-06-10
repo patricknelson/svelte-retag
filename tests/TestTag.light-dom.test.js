@@ -9,7 +9,7 @@ import { normalizeWhitespace } from './test-utils.js';
 
 let el = null;
 
-describe('Light DOM', () => {
+describe('<test-tag> (Light DOM)', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
@@ -210,7 +210,4 @@ describe('Light DOM', () => {
 		expect(el.innerHTML).toBe('<test-tag><svelte-retag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></svelte-retag></test-tag>');
 		console.warn = tmp;
 	});
-
-	// TODO: Test to validate that newly added slots affect rendered component content (for https://github.com/patricknelson/svelte-retag/issues/7)
-
 });
