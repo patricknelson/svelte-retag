@@ -224,7 +224,7 @@ export default function(opts) {
 
 			// Populate custom element attributes into the props object.
 			for(let attr of [...this.attributes]) {
-				props[this._translateAttribute(attr.name)] = attr.value
+				props[this._translateAttribute(attr.name)] = attr.value;
 			}
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or

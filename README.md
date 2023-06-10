@@ -97,7 +97,7 @@ On the immediate horizon:
 
 Milestones:
 
-- **v1:** WIP ⏳ (see TODO's above)
+- **v1:** ✅
 - **v2:** Svelte 4 support. i.e. Add HMR to Svelte 4's custom elements implementation, utilize exactly the same syntax
 	as `<svelte:options customElements={...} />` ([documentation](https://github.com/sveltejs/svelte/blob/version-4/site/content/docs/04-run-time.md#custom-element-api),
 	see also https://github.com/sveltejs/svelte/pull/8681
