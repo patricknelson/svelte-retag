@@ -87,7 +87,7 @@ with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
 On the immediate horizon:
 
-- [x] Migrate to Vitest for unit testing
+- [x] Migrate to Vitest for unit testing (see https://github.com/crisward/svelte-tag/pull/14)
 - [x] Update logo
 - [x] Fix nested slot support (https://github.com/patricknelson/svelte-retag/pull/5)
 - [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
