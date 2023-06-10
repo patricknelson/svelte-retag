@@ -49,9 +49,12 @@ describe('IIFE: Early execution tests (light DOM only)', () => {
 		root.appendChild(inner1);
 		await tick();
 		expect(el.innerHTML).toBe('<simple-tag><svelte-retag><span slot="inner1">REPLACE 1</span> REPLACE DEFAULT <span slot="inner2">REPLACE 2</span><!--<Simple>--></svelte-retag></simple-tag>');
+
+		// Clean up
+		setReadyState('complete');
 	});
 
-	// When render is completed: Test to validate that newly added slots DO NOT rendered component content
+	// When render is completed: Test to validate that newly added slots DO NOT rerender component content
 	test('complete: newly added slots have no effect', async () => {
 		setReadyState('complete');
 		expect(document.readyState).toBe('complete');
