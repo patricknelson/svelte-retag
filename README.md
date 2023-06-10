@@ -52,7 +52,7 @@ svelteRetag({
 	tagname: 'hello-world',
 
 	// Optional:
-	attributes: ['greeting', 'name'],
+	attributes: ['greetperson'],
 	shadow: false,
 	href: '/your/stylesheet.css', // Only necessary if shadow is true
 });
@@ -62,19 +62,23 @@ Now anywhere you use the `<hello-world>` tag, you'll get a Svelte component. Not
 name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
+To align with future versions of Svelte, attributes are automatically converted to lowercase (following
+the [Lit-style naming convention](https://lit.dev/docs/components/properties/#observed-attributes)). So, `greetPerson`
+on your component would be automatically made available as `greetperson` on your custom element.
+
 ```html
-<hello-world name="Cris"></hello-world>
+<hello-world greetperson="Cris"></hello-world>
 ```
 
 ### Options
 
-| Option     | Default      | Description                                                                                                                                                                         |
-|------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                           |
-| tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                   |
-| attributes | `[]`         | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component)                                                                 |
-| shadow     | `false`      | boolean - Should this component use shadow DOM.<br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6. |
-| href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).                                      |
+| Option     | Default      | Description                                                                                                                                                                                                                                                                                           |
+|------------|--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                                                                                                                                             |
+| tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                                                                                                                                     |
+| attributes | `[]`         | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component). <br> **Important:** Attributes must be the lowercase version of your Svelte component props ([similar to Lit](https://lit.dev/docs/components/properties/#observed-attributes)). |
+| shadow     | `false`      | boolean - Should this component use shadow DOM.<br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6.                                                                                                                   |
+| href       | `''`         | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).                                                                                                                                                        |
 
 **Note:** For portability, `svelte-retag`'s API is fully backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
