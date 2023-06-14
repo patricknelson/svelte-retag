@@ -12,6 +12,7 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 * 🌟 **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
 	requiring use of the shadow DOM). Doing so allows you to take full advantage of global styles while still maintaining
 	encapsulation of your component specific styles, utilizing web fonts and so on.
+* 🎰 **Slot Support:** Supports default and named slots in the light DOM on initial page load, including nesting.
 * 🏃‍♂️ **Instant:** Proactively renders the Svelte component _immediately_ into the light DOM as soon as the
 	parser encounters the custom element while dynamically re-rendering slot content as the parser moves along. This
 	reduces CLS (Cumulative Layout Shift) and makes it interactive more quickly _without_ having to wait for the document
@@ -93,6 +94,7 @@ On the immediate horizon:
 - [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
+- [ ] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
 - [ ] Lower priority: Support context (see https://github.com/patricknelson/svelte-retag/issues/10)
 
 Milestones:
