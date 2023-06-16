@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterEach, test, expect } from 'vitest';
+import { describe, beforeAll, beforeEach, afterEach, test, expect, vi } from 'vitest';
 import TestTag from './TestTag.svelte';
 import svelteRetag from '../index';
 import { normalizeWhitespace } from './test-utils.js';
@@ -15,8 +15,14 @@ describe('<test-tag> (Light DOM)', () => {
 		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
 	});
 
+	beforeEach(() => {
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+	});
+
 	afterEach(() => {
 		el.remove();
+
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	test('without slots', async () => {

@@ -71,6 +71,11 @@ export default function(opts) {
 					this.shadowRoot.appendChild(link);
 				}
 			}
+
+			// Pending render in requestAnimationFrame(). Useful since there's no point in rendering more than once prior to
+			// paint if we can help it. This is particularly useful when nesting (which triggers connects/disconnects) or
+			// during early execution while parsing (i.e. via iife/umd) which will have mutations.
+			this.renderQueue = false;
 		}
 
 		/**
@@ -198,7 +203,28 @@ export default function(opts) {
 		 * of how it depends on current internal state and how it alters internal state. Be sure to study how it's called
 		 * before calling it yourself externally. 🔥🐉
 		 */
-		_renderSvelteComponent() {
+		_renderSvelteComponent(force = false) {
+			if (!force) {
+				if (this.renderQueue) {
+					this._debug('renderSvelteComponent(): Skipping, already queued for update...');
+					return;
+				} else {
+					this._debug('renderSvelteComponent(): Queueing for update.');
+					this.renderQueue = true;
+					requestAnimationFrame(() => {
+						this._renderSvelteComponent(true);
+					});
+					return;
+				}
+			}
+
+			if (!this.isConnected) {
+				this._debug('renderSvelteComponent(): Bailing: No longer connected.');
+				return;
+			}
+
+			this.renderQueue = false;
+
 			this._debug('renderSvelteComponent()');
 
 			// Fetch the latest set of available slot elements to use in the render. For light DOM, this must be done prior

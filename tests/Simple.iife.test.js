@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterEach, test, expect } from 'vitest';
+import { describe, beforeAll, beforeEach, afterEach, test, expect, vi } from 'vitest';
 import Simple from './Simple.svelte';
 import svelteRetag from '../index';
 import { setReadyState } from './test-utils.js';
@@ -13,10 +13,16 @@ describe('IIFE: Early execution tests (light DOM only)', () => {
 		svelteRetag({ component: Simple, tagname: 'simple-tag', shadow: false, debugMode });
 	});
 
+	beforeEach(() => {
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+	});
+
 	afterEach(() => {
 		if (el) {
 			el.remove();
 		}
+
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	// When render is loading: Test to validate that newly added slots affect rendered component content
