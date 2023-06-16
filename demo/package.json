@@ -1,0 +1,16 @@
+{
+  "name": "svelte-retag-demos",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^2.0.4",
+    "svelte": "^3.58.0",
+    "vite": "^4.3.9"
+  }
+}
