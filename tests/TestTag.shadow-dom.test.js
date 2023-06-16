@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest';
 import svelteRetag from '../index.js';
 import TestTag from './TestTag.svelte';
 import { tick } from 'svelte';
@@ -13,6 +13,16 @@ describe('<test-tag> (Shadow DOM)', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
+	});
+
+	beforeEach(() => {
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+	});
+
+	afterEach(() => {
+		el.remove();
+
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	test('without slots', () => {

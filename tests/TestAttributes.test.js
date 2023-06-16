@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterEach, test, expect } from 'vitest';
+import { describe, beforeAll, beforeEach, afterEach, test, expect, vi } from 'vitest';
 import TestAttributes from './TestAttributes.svelte';
 import svelteRetag from '../index';
 import { normalizeWhitespace } from './test-utils.js';
@@ -10,10 +10,16 @@ describe('Test custom element attributes', () => {
 		svelteRetag({ component: TestAttributes, tagname: 'test-attribs', shadow: false });
 	});
 
+	beforeEach(() => {
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb());
+	});
+
 	afterEach(() => {
 		if (el) {
 			el.remove();
 		}
+
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	let allSetOutput = `
