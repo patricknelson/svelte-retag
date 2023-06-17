@@ -24,7 +24,7 @@
 	<li>Vite HMR updates (if launched locally)</li>
 </ul>
 
-<p><strong>Tip:</strong> To see the performance improvement of IIFE based component rendering, open DevTools, disable
+<p><strong>Performance:</strong> To see the performance improvement of IIFE based component rendering, open DevTools, disable
 	cache, and enable network throttling (select "Fast 3G"). This page actually loads <code>angular.js</code> in a
 	<code>&lt;script&gt;</code> tag lower in the page which causes the final <code>DOMContentLoaded</code> to to increase
 	dramagically on slower connections.

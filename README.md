@@ -7,6 +7,8 @@
 A web component wrapper for Svelte. Embeds your Svelte app or components inside custom elements using the light DOM _or_
 shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
+**Demo:** https://svelte-retag.vercel.app/
+
 ## Core features
 
 * 🌟 **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
