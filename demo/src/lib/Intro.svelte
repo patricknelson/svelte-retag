@@ -1,13 +1,43 @@
+<script>
+
+	function getLoadTime() {
+		return new Promise((resolve) => {
+			window.addEventListener('DOMContentLoaded', () => {
+				const duration = (new Date()).getTime() - window.performance.timeOrigin;
+				resolve(duration.toFixed(2));
+			});
+		});
+	}
+
+</script>
+
 <slot/>
 
 <p>This demo is implemented entirely using Svelte components and placed in the page using custom elements. Its purpose
-purely to demonstrate the following</p>
+	purely to demonstrate the following:</p>
 
 <ul>
 	<li>Slots (default and named slots)</li>
 	<li>Nesting within slots</li>
+	<li>The speed differences between deferred ESM vs. IIFE (on large pages)</li>
 	<li>Vite HMR updates (if launched locally)</li>
 </ul>
+
+<p><strong>Tip:</strong> To see the performance improvement of IIFE based component rendering, open DevTools, disable
+	cache, and enable network throttling (select "Fast 3G"). This page actually loads <code>angular.js</code> in a
+	<code>&lt;script&gt;</code> tag lower in the page which causes the final <code>DOMContentLoaded</code> to to increase
+	dramagically on slower connections.
+</p>
+
+<p class="loading-status">
+	{#await getLoadTime()}
+		Loading...
+	{:then duration}
+		DOMContentLoaded in <span>{duration}ms</span>.
+	{/await}
+</p>
+
+<hr>
 
 <p>Note that each counter below takes an initial <code>count</code> attribute with an <code>award</code> value, at which
 	point a 🎉 emoji is first displayed (with randomized emojis after that). Press <code>+</code> or <code>-</code> keys on
@@ -20,5 +50,13 @@ purely to demonstrate the following</p>
 		border: 1px solid #ccc;
 		border-radius: 4px;
 		color: #666;
+	}
+
+	.loading-status {
+		font-weight: bold;
+	}
+
+	.loading-status span {
+		color: red;
 	}
 </style>

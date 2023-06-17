@@ -10,7 +10,6 @@ export default defineConfig({
 	build: {
 		rollupOptions: {
 			// Just build the JS files, we'll manually handle HTML (due to how Vite modifies the <script> tags).
-			//input: 'src/main.js',
 			output: [
 				{
 					format: 'iife',

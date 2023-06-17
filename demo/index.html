@@ -5,8 +5,6 @@
 	<link rel="icon" type="image/svg+xml" href="/svelte-retag-favicon.svg"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>svelte-retag demo</title>
-
-	<!--<link rel="stylesheet" href="assets/main.css">-->
 	<script type="module" src="src/main.js"></script>
 </head>
 <body>
@@ -41,7 +39,11 @@
 			</example-tag>
 
 		</app-tag>
+
 	</div>
+
+	<!-- Reference some large external scripts to intentionally increase DOMContentLoaded time. -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js"></script>
 
 </body>
 </html>
