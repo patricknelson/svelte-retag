@@ -20,7 +20,7 @@
 <ul>
 	<li>Slots (default and named slots)</li>
 	<li>Nesting within slots</li>
-	<li>The speed differences between deferred ESM vs. IIFE (on large pages)</li>
+	<li>The speed differences between deferred ESM vs. IIFE (on large pages), particularly with regard to CLS (Content Layout Shift)</li>
 	<li>Vite HMR updates (if launched locally)</li>
 </ul>
 
