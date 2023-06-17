@@ -1,5 +1,6 @@
 <script>
 	import retagLogo from '../../logo/svelte-retag.svg';
+	import LoadingStatus from './lib/LoadingStatus.svelte';
 	export let title = 'Demo';
 </script>
 
@@ -15,6 +16,8 @@
 
 
 	<slot/>
+
+	<LoadingStatus/>
 
 </main>
 

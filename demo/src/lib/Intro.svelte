@@ -1,10 +1,11 @@
 <script>
+	import { getTimePassed } from '../utils.js';
+	import LoadingStatus from './LoadingStatus.svelte';
 
 	function getLoadTime() {
 		return new Promise((resolve) => {
 			window.addEventListener('DOMContentLoaded', () => {
-				const duration = (new Date()).getTime() - window.performance.timeOrigin;
-				resolve(duration.toFixed(2));
+				resolve(getTimePassed());
 			});
 		});
 	}
@@ -29,13 +30,13 @@
 	dramagically on slower connections.
 </p>
 
-<p class="loading-status">
+<LoadingStatus>
 	{#await getLoadTime()}
 		Loading...
 	{:then duration}
 		DOMContentLoaded in <span>{duration}ms</span>.
 	{/await}
-</p>
+</LoadingStatus>
 
 <hr>
 
