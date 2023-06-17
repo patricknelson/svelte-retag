@@ -35,7 +35,7 @@ export default function(opts) {
 	 */
 	if (!window.customElements.get('svelte-retag')) {
 		window.customElements.define('svelte-retag', class extends HTMLElement {
-			// noop.
+			// noop
 		});
 	}
 
@@ -87,6 +87,7 @@ export default function(opts) {
 		 */
 		connectedCallback() {
 			this._debug('connectedCallback()');
+
 
 			// TODO: Light DOM: Potential optimization opportunities:
 			//  1. Don't bother setup <svelte-retag> wrapper if the component doesn't have a default slot

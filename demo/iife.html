@@ -6,8 +6,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	<title>svelte-retag demo</title>
 
-	<!--<link rel="stylesheet" href="assets/main.css">-->
-	<script type="module" src="src/main.js"></script>
+	<!-- Vite isn't really well setup to export an entire app as IIFE (hence the weirdness and manual copying here) since
+	it expects all script references to be modules (but still supports compiling to IIFE). IIFE/UMD is still quite valuable
+	for our purposes, however: rendering custom elements very quickly and early with reduced CLS. Anyway, we must manually
+	point to the assets here, since Vite expects scripts to be modules, this page won't really work without some trickery. -->
+	<link rel="stylesheet" href="assets/index.css">
+	<script src="assets/index.iife.js"></script>
+
 </head>
 <body>
 
@@ -17,7 +22,7 @@
 		<app-tag title="Module Demo">
 
 			<intro-tag>
-				<p>See <a href="iife.html">IIFE demo</a>.</p>
+				<p>See <a href="/">Module demo</a>.</p>
 			</intro-tag>
 
 			<example-tag>
@@ -41,6 +46,7 @@
 			</example-tag>
 
 		</app-tag>
+
 	</div>
 
 </body>

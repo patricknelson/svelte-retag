@@ -12,6 +12,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  --light-gray: #f9f9f9;
 }
 
 a {
@@ -41,10 +43,9 @@ h1 {
 }
 
 #app {
-  max-width: 1280px;
+  max-width: 1080px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
 }
 
 button {
@@ -75,6 +76,6 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: var(--light-gray);
   }
 }

@@ -1,11 +1,28 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
-// Environment variables to allow some minor variation
-const VITE_BUILD_FORMAT = process.env.VITE_BUILD_ENTRYPOINT || 'es'; // es (modules) vs. iife
-const VITE_BUILD_ENTRYPOINT = process.env.VITE_BUILD_ENTRYPOINT || 'main';
 
 // https://vitejs.dev/config/
 export default defineConfig({
 	plugins: [svelte()],
+
+	// See https://rollupjs.org/configuration-options/
+	build: {
+		rollupOptions: {
+			// Just build the JS files, we'll manually handle HTML (due to how Vite modifies the <script> tags).
+			//input: 'src/main.js',
+			output: [
+				{
+					format: 'iife',
+					entryFileNames: 'assets/[name].[format].js',
+					assetFileNames: 'assets/[name][extname]',
+				},
+				{
+					format: 'es',
+					entryFileNames: 'assets/[name].[format].js',
+					assetFileNames: 'assets/[name][extname]',
+				},
+			],
+		},
+	}
 });
