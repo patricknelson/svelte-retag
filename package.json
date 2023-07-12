@@ -22,7 +22,7 @@
     "eslint": "^8.42.0",
     "eslint-plugin-svelte": "^2.30.0",
     "jsdom": "^22.1.0",
-    "svelte": "^3.54.0",
+    "svelte": "^4.0.5",
     "vite": "^4.3.0",
     "vitest": "^0.25.3"
   },
