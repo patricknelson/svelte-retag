@@ -4,14 +4,14 @@
 
 ![Node.js Package](https://github.com/patricknelson/svelte-retag/workflows/Node.js%20Package/badge.svg)
 
-A web component wrapper for Svelte. Embeds your Svelte app or components inside custom elements using the light DOM _or_
+A web component wrapper for Svelte 3 and 4. Embeds your Svelte app or components inside custom elements using the light DOM _or_
 shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
 **Demo:** https://svelte-retag.vercel.app/
 
 ## Core features
 
-* 🌟 **Light DOM:** Allows you to render your Svelte 3 components as custom elements in the light DOM as usual (without
+* 🌟 **Light DOM:** Allows you to render your Svelte components as custom elements in the light DOM as usual (without
 	requiring use of the shadow DOM). Doing so allows you to take full advantage of global styles while still maintaining
 	encapsulation of your component specific styles, utilizing web fonts and so on.
 * 🎰 **Slot Support:** Supports default and named slots in the light DOM on initial page load, including nesting.
@@ -19,7 +19,7 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 	parser encounters the custom element while dynamically re-rendering slot content as the parser moves along. This
 	reduces CLS (Cumulative Layout Shift) and makes it interactive more quickly _without_ having to wait for the document
 	to finish loading. _(Note: Requires compiling to IIFE format in your rollup config.)_
-* ⚡ **Vite HMR:** Unlike Svelte 3, these custom elements are also compatible with Vite's HMR. It avoids the infamous
+* ⚡ **Vite HMR:** Unlike Svelte, these custom elements are also compatible with Vite's HMR. It avoids the infamous
 	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
 * ⚙ **Flexibility:** Allows you to use your component as you normally would within Svelte (`<ExampleComponent />`) _and_
 	as a custom element outside of Svelte (`<example-component></example-component>`). You only need to define the
@@ -29,10 +29,10 @@ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
 ## Why?
 
-Svelte 3 already allows you to compile your components to custom elements. However, it has a couple of flaws:
+Svelte already allows you to compile your components to custom elements. However, it has a couple of flaws:
 
 * All of your nested components have to be implemented as custom elements, since the render flag applies to everything.
-* You have to use shadow DOM.
+* You have to use shadow DOM (Svelte 3, or Svelte 4 if you still want to use slots).
 * You have to deal with lots of bugs.
 * You loose many features Svelte has for inter-component communication.
 

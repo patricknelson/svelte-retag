@@ -1,6 +1,6 @@
 {
   "name": "svelte-retag",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Light DOM custom element wrapper for Svelte 3 with Vite HMR support",
   "main": "index.js",
   "scripts": {
@@ -12,6 +12,9 @@
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/patricknelson/svelte-retag.git"
+  },
+  "peerDependencies": {
+    "svelte": "^3.19.0 || ^4.0.0-next.0"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^2.0.0",
