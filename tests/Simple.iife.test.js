@@ -48,6 +48,8 @@ describe('IIFE: Early execution tests (light DOM only)', () => {
 		inner1.slot = 'inner1';
 		root.appendChild(inner1);
 		await tick();
+		console.log(Simple);
+		console.log(Simple.element);
 		expect(el.innerHTML).toBe('<simple-tag><svelte-retag><span slot="inner1">REPLACE 1</span> REPLACE DEFAULT <span slot="inner2">REPLACE 2</span><!--<Simple>--></svelte-retag></simple-tag>');
 
 		// Clean up
