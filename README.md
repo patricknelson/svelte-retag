@@ -96,14 +96,15 @@ On the immediate horizon:
 - [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
+- [x] Svelte 4 support (tested)
 - [ ] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
 - [ ] Lower priority: Support context (see https://github.com/patricknelson/svelte-retag/issues/10)
 
 Milestones:
 
 - **v1:** ✅
-- **v2:** Svelte 4 support. i.e. Add HMR to Svelte 4's custom elements implementation, utilize exactly the same syntax
-	as `<svelte:options customElements={...} />` ([documentation](https://github.com/sveltejs/svelte/blob/version-4/site/content/docs/04-run-time.md#custom-element-api),
+- **v2:** Utilize Svelte 4's `customElement` syntax, i.e.
+	`<svelte:options customElements={...} />` ([documentation](https://github.com/sveltejs/svelte/blob/version-4/site/content/docs/04-run-time.md#custom-element-api),
 	see also https://github.com/sveltejs/svelte/pull/8681
 	and https://github.com/sveltejs/svelte/issues/8457)
 
