@@ -299,7 +299,7 @@ export default function(opts) {
 				// 2. Deep clone doesn't work in unit tests
 				if (childNode instanceof Text) {
 					childHTML += childNode.textContent;
-				} else if (childNode.innerHTML) {
+				} else if (childNode.outerHTML) {
 					childHTML += childNode.outerHTML;
 				}
 
