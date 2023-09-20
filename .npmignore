@@ -8,3 +8,6 @@ coverage/**
 *.ai
 tests/**
 demo/**
+.editorconfig
+.eslintrc.cjs
+vite.config.js
