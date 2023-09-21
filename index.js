@@ -101,13 +101,14 @@ export default function(opts) {
 		connectedCallback() {
 			this._debug('connectedCallback()');
 
-
-			// TODO: Light DOM: Potential optimization opportunities:
-			//  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot and isn't hydratable
-			//  2. Don't setup <svelte-retag> wrapper if we don't end up processing mutations (i.e. document not in loading state).
-			//  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
-			//  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
-
+			/**
+			 * TODO: Light DOM: Potential optimization opportunities:
+			 *  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot and isn't hydratable
+			 *  2. Don't setup <svelte-retag> wrapper if we don't end up processing mutations (i.e. document not in loading state).
+			 *  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
+			 *  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
+			 */
+			
 			// Initialize the slot elements object which retains a reference to the original elements (by slot name) so they
 			// can be restored later on disconnectedCallback(). Also useful for debugging purposes.
 			this.slotEls = {};
@@ -126,12 +127,10 @@ export default function(opts) {
 						// Wait for the slots to become fully available.
 						// NOTE: We expect <svelte-retag> wrapper to already be present, however it may not be
 						// accessible until after the browser has finished parsing the DOM.
-						document.addEventListener('readystatechange', () => {
-							if (document.readyState === 'interactive') {
-								this._initLightRoot();
-								this._hydrateLightSlots();
-								this._renderSvelteComponent();
-							}
+						this._onSlotsReady(() => {
+							this._initLightRoot();
+							this._hydrateLightSlots();
+							this._renderSvelteComponent();
 						});
 						return;
 
@@ -156,7 +155,7 @@ export default function(opts) {
 					// this element. However, since this is only useful in light DOM elements *during* parsing, we should be sure
 					// to stop observing once the HTML is fully parsed and loaded.
 					this._observeSlots(true);
-					document.addEventListener('DOMContentLoaded', () => {
+					this._onSlotsReady(() => {
 						this._observeSlots(false);
 					});
 				}
@@ -171,23 +170,6 @@ export default function(opts) {
 			// executed as IIFE/UMD).
 			if (opts.hydratable) {
 				this.setAttribute('data-svelte-retag-hydratable', '');
-			}
-		}
-
-		/**
-		 * Setup a wrapper in the light DOM which can keep the rendered Svelte component separate from the default Slot
-		 * content, which is potentially being actively appended (at least while the browser parses during loading).
-		 */
-		_initLightRoot() {
-			// Recycle the existing light DOM root, if already present.
-			let existingRoot = this.querySelector('svelte-retag');
-			if (existingRoot !== null && existingRoot.parentElement === this) {
-				this._debug('_initLightRoot(): Restore from existing light DOM root');
-				this._root = existingRoot;
-			} else {
-				// Setup new (first time).
-				this._root = document.createElement('svelte-retag');
-				this.prepend(this._root);
 			}
 		}
 
@@ -241,6 +223,37 @@ export default function(opts) {
 				let translatedName = this._translateAttribute(name);
 				this.componentInstance.$set({ [translatedName]: newValue });
 			}
+		}
+
+		/**
+		 * Setup a wrapper in the light DOM which can keep the rendered Svelte component separate from the default Slot
+		 * content, which is potentially being actively appended (at least while the browser parses during loading).
+		 */
+		_initLightRoot() {
+			// Recycle the existing light DOM root, if already present.
+			let existingRoot = this.querySelector('svelte-retag');
+			if (existingRoot !== null && existingRoot.parentElement === this) {
+				this._debug('_initLightRoot(): Restore from existing light DOM root');
+				this._root = existingRoot;
+			} else {
+				// Setup new (first time).
+				this._root = document.createElement('svelte-retag');
+				this.prepend(this._root);
+			}
+		}
+
+		/**
+		 * Queues the provided callback to execute when we think all slots are fully loaded and available to fetch and
+		 * manipulate.
+		 *
+		 * @param {callback} callback
+		 */
+		_onSlotsReady(callback) {
+			document.addEventListener('readystatechange', () => {
+				if (document.readyState === 'interactive') {
+					callback();
+				}
+			});
 		}
 
 		/**
