@@ -1,4 +1,4 @@
-import { createSvelteSlots, findSlotParent } from './utils.js';
+import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 /**
  * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
@@ -18,11 +18,15 @@ import { createSvelteSlots, findSlotParent } from './utils.js';
  * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
  * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
+ * TODO: Consider adding option "hydratable" (or similar) to flag if we should decorate slots with our data attributes and special default slot wrapper.
+ *
  * @param {boolean|string?} opts.debugMode Hidden option to enable debugging for package development purposes.
  */
 export default function(opts) {
 	/**
 	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
+	 *
+	 * TODO: Update docs
 	 *
 	 * When performing light DOM rendering, this provides the opportunity to isolate the slot content away from the HTML
 	 * rendered by the component itself. This is particularly necessary if we're executing early (e.g. via IIFE formatted
@@ -34,7 +38,13 @@ export default function(opts) {
 	 * us.
 	 */
 	if (!window.customElements.get('svelte-retag')) {
+		// TODO: Doc?
 		window.customElements.define('svelte-retag', class extends HTMLElement {
+			// noop
+		});
+
+		// TODO: Doc
+		window.customElements.define('svelte-retag-default', class extends HTMLElement {
 			// noop
 		});
 	}
@@ -90,21 +100,53 @@ export default function(opts) {
 
 
 			// TODO: Light DOM: Potential optimization opportunities:
-			//  1. Don't bother setup <svelte-retag> wrapper if the component doesn't have a default slot
+			//  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot
 			//  2. Don't setup <svelte-retag> wrapper if we don't end up processing mutations (i.e. document not in loading state).
 			//  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
 			//  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
 
-			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
-			// disconnected/reconnected due to being in a slot).
-			if (!opts.shadow) {
-				this._root = document.createElement('svelte-retag');
-				this.prepend(this._root);
-			}
-
 			// Initialize the slot elements object which retains a reference to the original elements (by slot name) so they
 			// can be restored later on disconnectedCallback(). Also useful for debugging purposes.
 			this.slotEls = {};
+
+			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
+			// disconnected/reconnected due to being in a slot).
+			if (!opts.shadow) {
+				let existing = this.querySelector('svelte-retag');
+				if (existing !== null && existing.parentElement === this) {
+					// Since the tag is already present, we must be restoring from raw HTML (i.e. in an un-disconnected
+					// state), meaning this was pre-rendered somehow. So, we need to rehydrate functionality and pull
+					// out named and default slots, restore those slots and then render the component.
+					this._root = existing;
+
+					// Get the named slots inside the already rendered component by looking for our special data attribute.
+					let existingNamedSlots = existing.querySelectorAll('[data-svelte-retag-slot]');
+					for(let slot of existingNamedSlots) {
+						// Ensure we stick only to slots that belong to this element (avoid deeply nested components).
+						let slotParent = findSlotParent(slot);
+						if (slotParent !== existing) continue;
+
+						let slotName = slot.getAttribute('slot');
+						this.slotEls[slotName] = slot;
+					}
+
+					// If default slot content was used, it should still be wrapped in a special <svelte-retag-default>,
+					// which preserves all child nodes (including text nodes).
+					let existingDefaultSlot = this.querySelector('svelte-retag-default');
+					if (existingDefaultSlot !== null) {
+						this.slotEls['default'] = existingDefaultSlot;
+					}
+
+					// Put all slots back (including unwrapping default slot content) to prepare for initial component render.
+					this._restoreLightSlots();
+
+				} else {
+					// Setup new wrapper now so we can keep it separate from default slot content (potentially being
+					// actively appended during parsing).
+					this._root = document.createElement('svelte-retag');
+					this.prepend(this._root);
+				}
+			}
 
 			// Watch for changes to slot elements and ensure they're reflected in the Svelte component.
 			if (opts.shadow) {
@@ -268,6 +310,10 @@ export default function(opts) {
 				if (!this._isOwnSlot(candidate)) continue;
 
 				slots[candidate.slot] = candidate;
+
+				// TODO: Doc
+				candidate.setAttribute('data-svelte-retag-slot', '');
+
 				// TODO: Potentially problematic in edge cases where the browser may *oddly* return slots from query selector
 				//  above, yet their not actually a child of the current element. This seems to only happen if another
 				//  constructor() + connectedCallback() are BOTH called for this particular element again BEFORE a
@@ -283,7 +329,9 @@ export default function(opts) {
 
 			// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
 			// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
-			let fragment = document.createDocumentFragment();
+			// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
+			// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
+			let fragment = document.createElement('svelte-retag-default');
 
 			// Important: The conversion of these children to an array is necessary since we are actually modifying the list by calling .appendChild().
 			let childNodes = [...this.childNodes];
@@ -333,7 +381,11 @@ export default function(opts) {
 
 				// Prepend back so that in case more default slot content has arrived, we can rebuild it in order. This is
 				// important if we're executing during document.readyState === 'loading' (i.e. IIFE and not module).
-				this.prepend(slotEl);
+				if (slotEl.tagName === 'SVELTE-RETAG-DEFAULT') {
+					this.prepend(unwrap(slotEl));
+				} else {
+					this.prepend(slotEl);
+				}
 			}
 
 			// Since the slots are back in the original element, we should clean  up our reference to them. This is because,

@@ -56,3 +56,18 @@ export function findSlotParent(slot) {
 }
 
 
+/**
+ * Carefully "unwraps" the custom element tag itself from its default slot content (particularly if that content
+ * is just a text node). Only used when not using shadow root.
+ *
+ * @param {HTMLElement} from
+ *
+ * @returns {DocumentFragment}
+ */
+export function unwrap(from) {
+	let node = document.createDocumentFragment();
+	while(from.firstChild) {
+		node.appendChild(from.firstChild);
+	}
+	return node;
+}
