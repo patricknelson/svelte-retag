@@ -18,15 +18,17 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
  * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
  * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
- * TODO: Consider adding option "hydratable" (or similar) to flag if we should decorate slots with our data attributes and special default slot wrapper.
+ * Experimental:
+ * @param {string?}   opts.hydratable Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
+ *                                    web component (e.g. SSR) by adding extra markers (attributes & wrappers) during
+ *                                    rendering to enable svelte-retag to find and restore light DOM slots when
+ *                                    restoring interactivity.
  *
  * @param {boolean|string?} opts.debugMode Hidden option to enable debugging for package development purposes.
  */
 export default function(opts) {
 	/**
 	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
-	 *
-	 * TODO: Update docs
 	 *
 	 * When performing light DOM rendering, this provides the opportunity to isolate the slot content away from the HTML
 	 * rendered by the component itself. This is particularly necessary if we're executing early (e.g. via IIFE formatted
@@ -38,12 +40,13 @@ export default function(opts) {
 	 * us.
 	 */
 	if (!window.customElements.get('svelte-retag')) {
-		// TODO: Doc?
 		window.customElements.define('svelte-retag', class extends HTMLElement {
 			// noop
 		});
 
-		// TODO: Doc
+		// When the 'hydratable' option is enabled, this special wrapper will be applied around default slot content so
+		// that it can be discovered and restored later after pre-rendering. NOTE: This tag is always available since
+		// we can always hydrate. It is only applied to rendered content if elected for a particular component.
 		window.customElements.define('svelte-retag-default', class extends HTMLElement {
 			// noop
 		});
@@ -100,7 +103,7 @@ export default function(opts) {
 
 
 			// TODO: Light DOM: Potential optimization opportunities:
-			//  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot
+			//  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot and isn't hydratable
 			//  2. Don't setup <svelte-retag> wrapper if we don't end up processing mutations (i.e. document not in loading state).
 			//  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
 			//  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
@@ -109,42 +112,38 @@ export default function(opts) {
 			// can be restored later on disconnectedCallback(). Also useful for debugging purposes.
 			this.slotEls = {};
 
+			// If compiled as IIFE/UMD and executed early, then the document is likely to be in the process of loading
+			// and thus actively parsing tags, including not only this tag but also nested content (which may not yet be
+			// available yet).
+			const isLoading = (document.readyState === 'loading');
+
 			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
 			// disconnected/reconnected due to being in a slot).
 			if (!opts.shadow) {
-				let existing = this.querySelector('svelte-retag');
-				if (existing !== null && existing.parentElement === this) {
-					// Since the tag is already present, we must be restoring from raw HTML (i.e. in an un-disconnected
-					// state), meaning this was pre-rendered somehow. So, we need to rehydrate functionality and pull
-					// out named and default slots, restore those slots and then render the component.
-					this._root = existing;
+				// See if this component is pre-rendered and flagged as able to hydrate slots from the light DOM root.
+				if (this.hasAttribute('data-svelte-retag-hydratable')) {
+					if (isLoading) {
+						// Wait for the slots to become fully available.
+						// NOTE: We expect <svelte-retag> wrapper to already be present, however it may not be
+						// accessible until after the browser has finished parsing the DOM.
+						document.addEventListener('readystatechange', () => {
+							if (document.readyState === 'interactive') {
+								this._initLightRoot();
+								this._hydrateLightSlots();
+								this._renderSvelteComponent();
+							}
+						});
+						return;
 
-					// Get the named slots inside the already rendered component by looking for our special data attribute.
-					let existingNamedSlots = existing.querySelectorAll('[data-svelte-retag-slot]');
-					for(let slot of existingNamedSlots) {
-						// Ensure we stick only to slots that belong to this element (avoid deeply nested components).
-						let slotParent = findSlotParent(slot);
-						if (slotParent !== existing) continue;
-
-						let slotName = slot.getAttribute('slot');
-						this.slotEls[slotName] = slot;
+					} else {
+						// Light DOM slots are already all available, so hydrate them now and allow Svelte component
+						// rendering to proceed normally below.
+						this._initLightRoot();
+						this._hydrateLightSlots();
 					}
-
-					// If default slot content was used, it should still be wrapped in a special <svelte-retag-default>,
-					// which preserves all child nodes (including text nodes).
-					let existingDefaultSlot = this.querySelector('svelte-retag-default');
-					if (existingDefaultSlot !== null) {
-						this.slotEls['default'] = existingDefaultSlot;
-					}
-
-					// Put all slots back (including unwrapping default slot content) to prepare for initial component render.
-					this._restoreLightSlots();
-
 				} else {
-					// Setup new wrapper now so we can keep it separate from default slot content (potentially being
-					// actively appended during parsing).
-					this._root = document.createElement('svelte-retag');
-					this.prepend(this._root);
+					// Setup the wrapper now since we don't have to worry about hydration.
+					this._initLightRoot();
 				}
 			}
 
@@ -152,7 +151,7 @@ export default function(opts) {
 			if (opts.shadow) {
 				this._observeSlots(true);
 			} else {
-				if (document.readyState === 'loading') {
+				if (isLoading) {
 					// Setup the mutation observer to watch content as parser progresses through the HTML and adds nodes under
 					// this element. However, since this is only useful in light DOM elements *during* parsing, we should be sure
 					// to stop observing once the HTML is fully parsed and loaded.
@@ -165,6 +164,31 @@ export default function(opts) {
 
 			// Now that we're connected to the DOM, we can render the component now.
 			this._renderSvelteComponent();
+
+			// If we want to enable the current component as hydratable, add the flag now that it has been fully
+			// rendered (now that slots have been located under the Svelte component). This attribute is important since
+			// it allows us to know immediately that this component is capable of being hydrated (useful if compiled and
+			// executed as IIFE/UMD).
+			if (opts.hydratable) {
+				this.setAttribute('data-svelte-retag-hydratable', '');
+			}
+		}
+
+		/**
+		 * Setup a wrapper in the light DOM which can keep the rendered Svelte component separate from the default Slot
+		 * content, which is potentially being actively appended (at least while the browser parses during loading).
+		 */
+		_initLightRoot() {
+			// Recycle the existing light DOM root, if already present.
+			let existingRoot = this.querySelector('svelte-retag');
+			if (existingRoot !== null && existingRoot.parentElement === this) {
+				this._debug('_initLightRoot(): Restore from existing light DOM root');
+				this._root = existingRoot;
+			} else {
+				// Setup new (first time).
+				this._root = document.createElement('svelte-retag');
+				this.prepend(this._root);
+			}
 		}
 
 		/**
@@ -173,6 +197,9 @@ export default function(opts) {
 		 */
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
+
+			// Remove hydration flag, if present. This component will be able to be rendered from scratch instead.
+			this.removeAttribute('data-svelte-retag-hydratable');
 
 			// Disconnect slot mutation observer (if it's currently active).
 			this._observeSlots(false);
@@ -267,12 +294,45 @@ export default function(opts) {
 
 			// Populate custom element attributes into the props object.
 			for(let attr of [...this.attributes]) {
+				// Note: Skip svelte-retag specific attributes (used for hydration purposes).
+				if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
 				props[this._translateAttribute(attr.name)] = attr.value;
 			}
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
 			this.componentInstance = new opts.component({ target: this._root, props: props });
+		}
+
+		/**
+		 * Fetches slots from pre-rendered Svelte component HTML using special markers (either data attributes or custom
+		 * wrappers). Note that this will only work during initialization and only if the Svelte retag instance is
+		 * hydratable.
+		 */
+		_hydrateLightSlots() {
+			// Get the named slots inside the already rendered component by looking for our special data attribute.
+			let existingNamedSlots = this._root.querySelectorAll('[data-svelte-retag-slot]');
+			for(let slot of existingNamedSlots) {
+				// Ensure we stick only to slots that belong to this element (avoid deeply nested components).
+				let slotParent = findSlotParent(slot);
+				if (slotParent !== this._root) continue;
+
+				let slotName = slot.getAttribute('slot');
+				this.slotEls[slotName] = slot;
+			}
+
+			// If default slot content was used, it should still be wrapped in a special <svelte-retag-default>,
+			// which preserves all child nodes (including text nodes).
+			let existingDefaultSlot = this.querySelector('svelte-retag-default');
+			if (existingDefaultSlot !== null) {
+				this.slotEls['default'] = existingDefaultSlot;
+			}
+
+			// Put all slots back to their original positions (including unwrapping default slot content) to
+			// prepare for initial component render.
+			this._restoreLightSlots();
+
+			return true;
 		}
 
 		/**
@@ -311,8 +371,11 @@ export default function(opts) {
 
 				slots[candidate.slot] = candidate;
 
-				// TODO: Doc
-				candidate.setAttribute('data-svelte-retag-slot', '');
+				// If this is a hydratable component, flag this slot so we can find it later once it has been relocated
+				// under the fully rendered Svelte component (in the light DOM).
+				if (opts.hydratable) {
+					candidate.setAttribute('data-svelte-retag-slot', '');
+				}
 
 				// TODO: Potentially problematic in edge cases where the browser may *oddly* return slots from query selector
 				//  above, yet their not actually a child of the current element. This seems to only happen if another
@@ -331,7 +394,13 @@ export default function(opts) {
 			// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
 			// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
 			// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
-			let fragment = document.createElement('svelte-retag-default');
+			let fragment = document.createDocumentFragment();
+
+			// For hydratable components, we have to nest these nodes under a tag that we can still recognize once
+			// they're shifted inside of the fully rendered Svelte component, which could be anywhere.
+			if (opts.hydratable) {
+				fragment = document.createElement('svelte-retag-default');
+			}
 
 			// Important: The conversion of these children to an array is necessary since we are actually modifying the list by calling .appendChild().
 			let childNodes = [...this.childNodes];
