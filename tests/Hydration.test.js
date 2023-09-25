@@ -67,8 +67,27 @@ describe('<hydration-tag>: Incorporation of special hydration attributes and tag
 		expect(defaultSlot).toBeNull();
 	});
 
+	test('hydrate from pre-rendered HTML', async () => {
+		el = document.createElement('div');
+		el.innerHTML = `
+			<hydration-tag data-svelte-retag-hydratable>
+				<svelte-retag>
+					<div>
+						<span slot="foo" data-svelte-retag-slot>Named Slot Content</span>
+						<svelte-retag-default>Default Slot Content</svelte-retag-default>
+					</div>
+				</svelte-retag>
+			</hydration-tag>
+		`;
+		document.body.appendChild(el);
 
-	// TODO: Validate that component is hydrated from already transformed HTML
+		// If the component initialized successfully, it will have pulled these slots into its "slotEls" object.
+		const hydrationTag = el.querySelector('hydration-tag');
+		const slotEls = hydrationTag.slotEls;
+		expect(slotEls['foo']).toBeInstanceOf(HTMLSpanElement);
+		expect(slotEls['default']).toBeInstanceOf(HTMLElement);
+	});
+
 
 });
 
@@ -81,7 +100,6 @@ describe('<hydration-disabled-tag>: Ensure attributes and tags are not incorpora
 
 	afterEach(() => {
 		if (el) {
-			console.log(el.outerHTML);
 			el.remove();
 		}
 	});
