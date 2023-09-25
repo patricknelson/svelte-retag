@@ -19,10 +19,10 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
  * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
- * @param {string?}   opts.hydratable Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
- *                                    web component (e.g. SSR) by adding extra markers (attributes & wrappers) during
- *                                    rendering to enable svelte-retag to find and restore light DOM slots when
- *                                    restoring interactivity.
+ * @param {boolean?}   opts.hydratable Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
+ *                                     web component (e.g. SSR) by adding extra markers (attributes & wrappers) during
+ *                                     rendering to enable svelte-retag to find and restore light DOM slots when
+ *                                     restoring interactivity.
  *
  * @param {boolean|string?} opts.debugMode Hidden option to enable debugging for package development purposes.
  */
@@ -108,7 +108,7 @@ export default function(opts) {
 			 *  If this happens though, we must only setup/destroy in connected/disconnected callbacks and thus anything that
 			 *  depends upon it needs a separate method of determining. Maybe getter that checks if this._root.tagName === 'SVELTE-RETAG'?
 			 */
-			
+
 			// Initialize the slot elements object which retains a reference to the original elements (by slot name) so they
 			// can be restored later on disconnectedCallback(). Also useful for debugging purposes.
 			this.slotEls = {};
@@ -467,6 +467,12 @@ export default function(opts) {
 					this.prepend(unwrap(slotEl));
 				} else {
 					this.prepend(slotEl);
+
+					// If hydration was enabled for this particular element (not necessarily for the current context),
+					// we should clean up hydration-specific attributes for consistency.
+					if (slotEl instanceof HTMLElement && slotEl.hasAttribute('data-svelte-retag-slot')) {
+						slotEl.removeAttribute('data-svelte-retag-slot');
+					}
 				}
 			}
 
