@@ -1,7 +1,27 @@
 <script>
 	import retagLogo from '../../logo/svelte-retag.svg';
 	import LoadingStatus from './lib/LoadingStatus.svelte';
-	export let title = 'Demo';
+
+	export let pageTitle = 'Demo';
+	export let page = '';
+
+	const pages = [
+		{
+			alias: 'index',
+			title: 'Module',
+			url: 'index.html',
+		},
+		{
+			alias: 'hydratable',
+			title: 'Module with Hydration',
+			url: (import.meta.env.DEV ? 'hydratable.source.html' : 'hydratable.html'),
+		},
+		{
+			alias: 'iife',
+			title: 'IIFE/UMD',
+			url: 'iife.html',
+		},
+	];
 </script>
 
 <main>
@@ -10,15 +30,23 @@
 			<img src={retagLogo} class="logo" alt="svelte-retag logo (link to GitHub repo)"/> </a>
 	</div>
 
-	{#if title}
-		<h1>{title}</h1>
-	{/if}
+	<!-- Simple navigation between demos -->
+	<nav>
+		Demos:
+		<ul>
+		{#each pages as pageInfo}
+			<li><a href="{pageInfo.url}" class:current={page === pageInfo.alias}>{pageInfo.title}</a></li>
+		{/each}
+		</ul>
+	</nav>
 
+	{#if pageTitle}
+		<h1>{pageTitle}</h1>
+	{/if}
 
 	<slot/>
 
 	<LoadingStatus/>
-
 </main>
 
 <style>
@@ -34,5 +62,30 @@
 
 	.logo:hover {
 		filter: drop-shadow(0 0 2em #ff3e00aa);
+	}
+
+	nav {
+		font-weight: bold;
+	}
+
+	ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: inline-flex;
+	}
+
+	li:first-child {
+		border-left: 0;
+	}
+
+	li {
+		border-left: 1px solid #ccc;
+		padding: 0 10px;
+	}
+
+	a.current {
+		color: #ff3e00;
+		text-decoration: underline;
 	}
 </style>

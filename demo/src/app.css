@@ -16,6 +16,10 @@
   --light-gray: #f9f9f9;
 }
 
+html {
+  box-sizing: border-box;
+}
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -34,6 +38,11 @@ body {
 
 h1 {
   font-size: 3.2em;
+  line-height: 1.1;
+}
+
+h2 {
+  font-size: 1.8em;
   line-height: 1.1;
 }
 
@@ -64,6 +73,14 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+
+code {
+  background: var(--light-gray);
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #666;
 }
 
 @media (prefers-color-scheme: light) {
