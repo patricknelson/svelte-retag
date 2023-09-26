@@ -23,7 +23,7 @@
 
 			<intro-tag>
 				<p>Built using <code>iife</code> format and included via standard <code>&lt;script&gt;</code> inside the <code>&lt;header&gt;</code> tag.</p>
-				<p>While this reduces cumulative layout shift (CLS), it is not conducive to code splitting and may generate a large build package (thus still taking a little while to download and initialize).</p>
+				<p>While this reduces cumulative layout shift (CLS), it is not conducive to code splitting and may generate a large bundle (thus taking longer to download and initialize).</p>
 			</intro-tag>
 
 			<example-tag>
@@ -49,9 +49,6 @@
 		</app-tag>
 
 	</div>
-
-	<!-- Reference some large external scripts to intentionally increase DOMContentLoaded time. -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js"></script>
 
 </body>
 </html>

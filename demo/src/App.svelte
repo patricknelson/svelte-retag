@@ -1,6 +1,5 @@
 <script>
 	import retagLogo from '../../logo/svelte-retag.svg';
-	import LoadingStatus from './lib/LoadingStatus.svelte';
 
 	export let pageTitle = 'Demo';
 	export let page = '';
@@ -45,8 +44,6 @@
 	{/if}
 
 	<slot/>
-
-	<LoadingStatus/>
 </main>
 
 <style>

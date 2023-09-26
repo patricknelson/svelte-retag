@@ -27,13 +27,17 @@
 		<app-tag pagetitle="Module with Hydration" page="hydratable">
 
 			<intro-tag>
-				<p>Built with the standard <code>es</code> format and included via
-					<code>&lt;script type=&quot;module&quot;&gt;</code>. However, the HTML on this page was rendered ahead of time
-					and then initialized after page load to enable interactivity (a.k.a. &ldquo;hydrated&rdquo;).</p>
-				<p>Combines the best of both worlds. Specifically: Performing SSR/SSG and then enabling hydration helps to
-					<strong>eliminate</strong> cumulative layout shift (CLS) while still allowing better code splitting and the
-					<code>defer</code>'ed behavior of <code>type=&quot;module&quot;</code>. All while using web components with
-					the light DOM.</p>
+				<p>Built with <code>es</code> format and included via <code>&lt;script type=&quot;module&quot;&gt;</code> with
+					HTML pre-rendered and components initialized after page load to enable interactivity (a.k.a.
+					&ldquo;<a href="https://en.wikipedia.org/wiki/Hydration_(web_development)" target="_blank" rel="noopener">hydrated</a>&rdquo;).
+				</p>
+				<p>
+					CLS can occur when your <code>svelte-retag</code> web components loaded as modules don't render until after
+					the HTML on the rest of the page has finished parsing. SSR/SSG combined with hydration helps to eliminate this
+					by pushing the code responsible for <em>displaying</em> your web components immediately along with the rest of
+					the page. Interactivity is then restored to those components once modules (which are
+					<a href="https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script#attributes" target="_blank" rel="noopener">always
+						deferred</a>) have finished loading.</p>
 			</intro-tag>
 
 			<example-tag>
@@ -59,9 +63,6 @@
 		</app-tag>
 
 	</div>
-
-	<!-- Reference some large external scripts to intentionally increase DOMContentLoaded time. -->
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.3/angular.js"></script>
 
 </body>
 </html>
