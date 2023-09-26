@@ -4,18 +4,18 @@
 	<meta charset="UTF-8"/>
 	<link rel="icon" type="image/svg+xml" href="/svelte-retag-favicon.svg"/>
 	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-	<title>svelte-retag demo</title>
+	<title>svelte-retag demo (module)</title>
 	<script type="module" src="src/main.js"></script>
 </head>
 <body>
 
 	<div id="app">
 
-		<!-- Go ahead and edit this title. Changes will be forwarded automatically. -->
-		<app-tag title="Module Demo">
+		<!-- Go ahead and edit this "pagetitle"! Changes will be forwarded to the "pageTitle" prop automatically. -->
+		<app-tag pagetitle="Module" page="index">
 
 			<intro-tag>
-				<p>See <a href="iife.html">IIFE demo</a>.</p>
+				 <p>Built with the standard <code>es</code> format and included via <code>&lt;script type=&quot;module&quot;&gt;</code>.</p>
 			</intro-tag>
 
 			<example-tag>

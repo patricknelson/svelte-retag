@@ -5,12 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp iife.html dist/",
+    "build": "rm -rf dist/ && vite build && VITE_BUILD_FORMAT=iife yarn vite build && cp iife.html dist/",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.0.4",
-    "svelte": "^3.58.0",
-    "vite": "^4.3.9"
+    "@sveltejs/vite-plugin-svelte": "^2.4.6",
+    "svelte": "^4.0.5",
+    "vite": "^4.3.0"
   }
 }
