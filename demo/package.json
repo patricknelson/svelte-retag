@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist/ && vite build && VITE_BUILD_FORMAT=iife yarn vite build && cp iife.html dist/",
+    "build": "rm -rf dist/ && vite build && yarn build:iife",
+    "build:iife": "VITE_BUILD_FORMAT=iife yarn vite build && cp iife.html dist/",
     "preview": "vite preview"
   },
   "devDependencies": {
