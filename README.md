@@ -2,7 +2,7 @@
 
 # svelte-retag
 
-![Node.js Package](https://github.com/patricknelson/svelte-retag/workflows/Node.js%20Package/badge.svg)
+![Unit Tests](https://github.com/patricknelson/svelte-retag/actions/workflows/unit-tests.yml/badge.svg)
 
 A web component wrapper for Svelte 3 and 4. Embeds your Svelte app or components inside custom elements using the light DOM _or_
 shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
