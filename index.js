@@ -52,14 +52,6 @@ export default function(opts) {
 		});
 	}
 
-	// Inspect the component early on to get its available properties (statically available).
-	const propInstance = new opts.component({ target: document.createElement('div') });
-	const propMap = new Map();
-	for(let key of Object.keys(propInstance.$$.props)) {
-		propMap.set(key.toLowerCase(), key);
-	}
-	propInstance.$destroy();
-
 
 	/**
 	 * Defines the actual custom element responsible for rendering the provided Svelte component.
@@ -69,6 +61,17 @@ export default function(opts) {
 			super();
 
 			this._debug('constructor()');
+
+			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
+			// available). Note that we're doing it here in the constructor in case this component has context (so it may
+			// normally only be instantiated from within another component).
+			const propInstance = new opts.component({ target: document.createElement('div') });
+			this.propMap = new Map();
+			for(let key of Object.keys(propInstance.$$.props)) {
+				this.propMap.set(key.toLowerCase(), key);
+			}
+			propInstance.$destroy();
+
 
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
@@ -265,8 +268,8 @@ export default function(opts) {
 		_translateAttribute(attributeName) {
 			// In the unlikely scenario that a browser somewhere doesn't do this for us (or maybe we're in a quirks mode or something...)
 			attributeName = attributeName.toLowerCase();
-			if (propMap.has(attributeName)) {
-				return propMap.get(attributeName);
+			if (this.propMap.has(attributeName)) {
+				return this.propMap.get(attributeName);
 			} else {
 				this._debug(`_translateAttribute(): ${attributeName} not found`);
 				return attributeName;
