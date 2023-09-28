@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8"/>
+	<link rel="icon" type="image/svg+xml" href="/svelte-retag-favicon.svg"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	<title>svelte-retag demo (tabs demo)</title>
+	<script type="module" src="src/main.js"></script>
+</head>
+<body>
+
+	<div id="app">
+		<h1>Tabs demo</h1>
+		<!-- TODO: Write up explanation of what is happening below. -->
+		<p>Thanks to
+			<a href="https://stackoverflow.com/users/1990514/amir-pournasserian" target="_blank" rel="noopener">AmirPournasserian</a>
+			from
+			<a href="https://stackoverflow.com/questions/75024281/how-to-avoid-overwriting-context-in-nested-components-like-tabs-in-svelte" target="_blank" rel="noopener">
+				this StackOverflow post</a> for the tab components which rely on this context.</p>
+
+		<!-- TODO: All contents below are a WIP during debugging -->
+
+		<tabs-demo></tabs-demo>
+
+
+		<!-- Simple -->
+		<!--<tabs-wrapper>
+			<tab-list>
+				<tab-button>one</tab-button>
+				<tab-button>two</tab-button>
+				<tab-button>three</tab-button>
+			</tab-list>
+
+			<tab-panel>
+				<h2>First panel</h2>
+
+			</tab-panel>
+
+			<tab-panel>
+				<h2>Second panel</h2>
+			</tab-panel>
+
+			<tab-panel>
+				<h2>Third panel</h2>
+			</tab-panel>
+		</tabs-wrapper>-->
+
+		<!-- Simple nested: Top level context -->
+		<!--<tabs-wrapper>
+			<tab-list>
+				<tab-button>one</tab-button>
+				<tab-button>two</tab-button>
+			</tab-list>
+
+			<tab-panel>
+				<h2>First panel</h2>
+				<tabs-wrapper>
+					<tab-list>
+						<tab-button>Nested one</tab-button>
+						<tab-button>Nested two</tab-button>
+					</tab-list>
+
+					<tab-panel>
+						<h2>Nested first panel</h2>
+
+					</tab-panel>
+
+					<tab-panel>
+						<h2>Nested second panel</h2>
+					</tab-panel>
+				</tabs-wrapper>
+
+			</tab-panel>
+
+			<tab-panel>
+				<h2>Second panel</h2>
+			</tab-panel>
+
+		</tabs-wrapper>-->
+
+
+		<!-- Complex nested: Top level context -->
+		<!--<tabs-wrapper>
+			<tab-list>
+				<tab-button>one</tab-button>
+				<tab-button>two</tab-button>
+				<tab-button>three</tab-button>
+			</tab-list>
+
+			<tab-panel>
+				fails when nesting
+
+
+				&lt;!&ndash; Has nested context &ndash;&gt;
+				<tabs-wrapper>
+					<tab-list>
+						<tab-button>nested one</tab-button>
+						<tab-button>nested two</tab-button>
+					</tab-list>
+
+					<tab-panel>
+						<h2>First nested panel</h2>
+					</tab-panel>
+					<tab-panel>
+						<h2>Second nested panel</h2>
+					</tab-panel>
+				</tabs-wrapper>
+
+
+			</tab-panel>
+
+			<tab-panel>
+				<h2>Second panel</h2>
+			</tab-panel>
+
+			<tab-panel>
+				<h2>Third panel</h2>
+			</tab-panel>
+		</tabs-wrapper>-->
+
+
+	</div>
+</body>
+</html>

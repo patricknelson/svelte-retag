@@ -24,6 +24,7 @@ export default defineConfig({
 				'index.html',
 				'hydratable.html',
 				'hydratable.source.html', // Used for generating content in hydratable.html above.
+				'tabs.html',
 			],
 
 			output: {
