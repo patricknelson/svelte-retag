@@ -75,7 +75,6 @@
 		border-color: #646cff;
 	}
 
-	button:focus,
 	button:focus-visible {
 		outline-width: 4px;
 		outline-style: auto;

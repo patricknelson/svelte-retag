@@ -20,11 +20,10 @@
 
 		<!-- TODO: All contents below are a WIP during debugging -->
 
-		<tabs-demo></tabs-demo>
+		<!--<tabs-demo></tabs-demo>-->
 
-
-		<!-- Simple -->
-		<!--<tabs-wrapper>
+		<!-- Top level context -->
+		<tabs-wrapper>
 			<tab-list>
 				<tab-button>one</tab-button>
 				<tab-button>two</tab-button>
@@ -32,66 +31,8 @@
 			</tab-list>
 
 			<tab-panel>
-				<h2>First panel</h2>
 
-			</tab-panel>
-
-			<tab-panel>
-				<h2>Second panel</h2>
-			</tab-panel>
-
-			<tab-panel>
-				<h2>Third panel</h2>
-			</tab-panel>
-		</tabs-wrapper>-->
-
-		<!-- Simple nested: Top level context -->
-		<!--<tabs-wrapper>
-			<tab-list>
-				<tab-button>one</tab-button>
-				<tab-button>two</tab-button>
-			</tab-list>
-
-			<tab-panel>
-				<h2>First panel</h2>
-				<tabs-wrapper>
-					<tab-list>
-						<tab-button>Nested one</tab-button>
-						<tab-button>Nested two</tab-button>
-					</tab-list>
-
-					<tab-panel>
-						<h2>Nested first panel</h2>
-
-					</tab-panel>
-
-					<tab-panel>
-						<h2>Nested second panel</h2>
-					</tab-panel>
-				</tabs-wrapper>
-
-			</tab-panel>
-
-			<tab-panel>
-				<h2>Second panel</h2>
-			</tab-panel>
-
-		</tabs-wrapper>-->
-
-
-		<!-- Complex nested: Top level context -->
-		<!--<tabs-wrapper>
-			<tab-list>
-				<tab-button>one</tab-button>
-				<tab-button>two</tab-button>
-				<tab-button>three</tab-button>
-			</tab-list>
-
-			<tab-panel>
-				fails when nesting
-
-
-				&lt;!&ndash; Has nested context &ndash;&gt;
+				<!-- Nested context -->
 				<tabs-wrapper>
 					<tab-list>
 						<tab-button>nested one</tab-button>
@@ -116,7 +57,7 @@
 			<tab-panel>
 				<h2>Third panel</h2>
 			</tab-panel>
-		</tabs-wrapper>-->
+		</tabs-wrapper>
 
 
 	</div>

@@ -39,10 +39,3 @@
 		<h2>Third panel</h2>
 	</TabPanel>
 </TabsWrapper>
-
-
-<style>
-	:global(body > *) {
-		width: 600px;
-	}
-</style>

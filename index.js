@@ -1,11 +1,73 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
-/**
- * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
- * default slot content.
- *
- * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
- */
+let renderQueue = [];
+let rafRunning = false;
+let rafQueued = false;
+
+function queueForRender(element) {
+	if (renderQueue.indexOf(element) !== -1) {
+		// Skip since this element is already queued.
+		console.debug('queueForRender(): skipped since its already queued:', element);
+		return;
+	}
+
+	// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
+	// light DOM slot, it will be disconnected and reconnected again
+	if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') !== null) {
+		console.debug('queueForRender(): skipped since a light DOM parent is queued for render:', element);
+		return;
+	}
+
+	console.debug('queueForRender(): successfully queued for:', element);
+	element.setAttribute('data-svelte-retag-render', '');
+
+	// TODO: ISSUE-10: Is this necessary now? Maybe instead we should just use document.querySelectorAll('[data-svelte-retag-render]')
+	//  which also happens to enforce document order, which also happens to be consistent with the order necessary to
+	//  properly implement context (i.e. initialize parent to child) for the shadow DOM as well?
+	renderQueue.push(element);
+
+	// Even though it won't hurt, it's probably best to ensure we don't queue up our raF function to run more than
+	// necessary. Granted, it could run
+	if (!rafQueued) {
+		requestAnimationFrame(renderElements);
+		rafQueued = true;
+	}
+}
+
+
+let renderOrder = 0;
+
+function renderElements() {
+	if (renderQueue.length === 0) {
+		console.warn('renderQueue: Skipping: Empty');
+		return;
+	}
+	if (rafRunning) {
+		console.warn('renderQueue: Skipping: Already rendering');
+		return;
+	}
+
+	console.debug('raF: renderElements()');
+
+	rafRunning = true;
+
+	// For each element, double check and skip any which have *light* DOM parents that are queued for render. The reason
+	// for this is that they will be disconnected  and queued for render later anyway.
+	for (let element of renderQueue) {
+		if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') === null) {
+			element.removeAttribute('data-svelte-retag-render');
+			element._renderSvelteComponent();
+
+			// TODO: ISSUE-10: Remove or make optional once done with development.
+			renderOrder++;
+			element.setAttribute('data-svelte-retag-render-order', renderOrder);
+		}
+	}
+
+	rafQueued = false;
+	rafRunning = false;
+}
+
 
 /**
  * Please see README.md for usage information.
@@ -38,6 +100,8 @@ export default function(opts) {
 	 * initial page loads). That CLS typically occurs because ESM modules are deferred (as noted above) but also because
 	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
 	 * us.
+	 *
+	 * When performing shadow DOM rendering, it provides an un-styled container where we can attach
 	 */
 	if (!window.customElements.get('svelte-retag')) {
 		window.customElements.define('svelte-retag', class extends HTMLElement {
@@ -52,6 +116,12 @@ export default function(opts) {
 		});
 	}
 
+	/**
+	 * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
+	 * default slot content.
+	 *
+	 * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
+	 */
 
 	/**
 	 * Defines the actual custom element responsible for rendering the provided Svelte component.
@@ -61,22 +131,27 @@ export default function(opts) {
 			super();
 
 			this._debug('constructor()');
+			this.rand = Math.random();
+			//console.log(this.rand, 'constructor():', customElementPath(this));
 
 			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
 			// available). Note that we're doing it here in the constructor in case this component has context (so it may
 			// normally only be instantiated from within another component).
-			const propInstance = new opts.component({ target: document.createElement('div') });
 			this.propMap = new Map();
+			// TODO: ISSUE-10: Fails since it also needs context. Make this more consistent or find cleaner method.
+			/*const context = this._getAncestorContext();
+			const propInstance = new opts.component({ target: document.createElement('div'), context });
 			for(let key of Object.keys(propInstance.$$.props)) {
 				this.propMap.set(key.toLowerCase(), key);
 			}
-			propInstance.$destroy();
+			propInstance.$destroy();*/
 
 
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
 				this.attachShadow({ mode: 'open' });
-				this._root = document.createElement('div');
+				// TODO: Better than <div>, but: Is a wrapper entirely necessary? Why not just set this._root = this.shadowRoot?
+				this._root = document.createElement('svelte-retag');
 				this.shadowRoot.appendChild(this._root);
 
 				// Link generated style. Do early as possible to ensure we start downloading CSS (reduces FOUC).
@@ -103,6 +178,11 @@ export default function(opts) {
 		 */
 		connectedCallback() {
 			this._debug('connectedCallback()');
+
+			// Identifies DOM rendering type to help differentiate during deferred rendering. This is necessary particularly
+			// for any type of child components which are *underneath* a parent that is using light DOM rendering. This helps
+			// to ensure rendering is performed in the correct order (useful for things like context).
+			this.setAttribute('data-svelte-retag-dom', opts.shadow ? 'shadow' : 'light');
 
 			/**
 			 * TODO: Light DOM: Potential optimization opportunities:
@@ -133,7 +213,7 @@ export default function(opts) {
 						this._onSlotsReady(() => {
 							this._initLightRoot();
 							this._hydrateLightSlots();
-							this._renderSvelteComponent();
+							this._queueForRender();
 						});
 						return;
 
@@ -165,7 +245,7 @@ export default function(opts) {
 			}
 
 			// Now that we're connected to the DOM, we can render the component now.
-			this._renderSvelteComponent();
+			this._queueForRender();
 
 			// If we want to enable the current component as hydratable, add the flag now that it has been fully
 			// rendered (now that slots have been located under the Svelte component). This attribute is important since
@@ -183,6 +263,9 @@ export default function(opts) {
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
 
+			// TODO: ISSUE-10: Doc
+			this.removeAttribute('data-svelte-retag');
+
 			// Remove hydration flag, if present. This component will be able to be rendered from scratch instead.
 			this.removeAttribute('data-svelte-retag-hydratable');
 
@@ -195,6 +278,7 @@ export default function(opts) {
 				try {
 					// Clean up: Destroy Svelte component when removed from DOM.
 					this.componentInstance.$destroy();
+					delete this.componentInstance;
 				} catch(err) {
 					console.error(`Error destroying Svelte component in '${this.tagName}'s disconnectedCallback(): ${err}`);
 				}
@@ -277,8 +361,38 @@ export default function(opts) {
 		}
 
 		/**
+		 * TODO: ISSUE-10: Doc
+		 *
+		 * TODO: Maybe this should be inverted; i.e. instead of getting context from parent, have parent pass it to the child during render.
+		 */
+		_getAncestorContext()  {
+			let node = this;
+			while (node.parentNode) {
+				node = node.parentNode;
+				let context = node?.componentInstance?.$$?.context;
+				if (context) {
+					if (!context._id) {
+						context._id = Math.random();
+					}
+					return context;
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * TODO: ISSUE-10: DOC
+		 */
+		_queueForRender() {
+			queueForRender(this);
+		}
+
+		/**
 		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
 		 * (with slots initialized elsewhere).
+		 *
+		 * TODO: ISSUE-10: Add note about the necessity to render components in order and about how there's now a render queue.
 		 *
 		 * NOTE: Despite the intuitive name, this method is private since its functionality requires a deeper understanding
 		 * of how it depends on current internal state and how it alters internal state. Be sure to study how it's called
@@ -317,7 +431,9 @@ export default function(opts) {
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
-			this.componentInstance = new opts.component({ target: this._root, props: props });
+			const context = this._getAncestorContext() || new Map();
+			console.log(this.tagName, context._id);
+			this.componentInstance = new opts.component({ target: this._root, props: props, context });
 		}
 
 		/**
@@ -535,7 +651,7 @@ export default function(opts) {
 		/**
 		 * Watches for slot changes, specifically:
 		 *
-		 * 1. Shadow DOM: All slot changes will trigger a rerender of the Svelte component
+		 * 1. Shadow DOM: All slot changes will queue a rerender of the Svelte component
 		 *
 		 * 2. Light DOM: Only additions will be accounted for. This is particularly because currently we only support
 		 *    watching for changes during document parsing (i.e. document.readyState === 'loading', prior to the
@@ -577,8 +693,8 @@ export default function(opts) {
 				}
 
 				// Force a rerender now.
-				this._debug('_processMutations(): Trigger rerender');
-				this._renderSvelteComponent();
+				this._debug('_processMutations(): Queue rerender');
+				this._queueForRender();
 			}
 		}
 
