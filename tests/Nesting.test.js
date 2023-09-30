@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterEach, test, expect } from 'vitest';
+import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Nesting from './Nesting.svelte';
 import svelteRetag from '../index';
 import { normalizeWhitespace } from './test-utils.js';
@@ -10,12 +10,18 @@ describe('<nesting-tag> (Nesting)', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: Nesting, tagname: 'nesting-tag', shadow: false, debugMode });
+
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
 	});
 
 	afterEach(() => {
 		if (el) {
 			el.remove();
 		}
+	});
+
+	afterAll(() => {
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	const nestedOpen = '<nesting-tag><svelte-retag><div>';

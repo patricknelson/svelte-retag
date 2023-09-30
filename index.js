@@ -3,72 +3,36 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 // TODO: Consider build of svelte-retag so we can drop console.logs() when publishing. See: https://github.com/vitejs/vite/discussions/7920
 
-let rafRunning = false;
-
-/**
- * TODO: ISSUE-10: Doc
- *
- * @param {HTMLElement} element
- * @param {Boolean} isShadow
- */
-function queueForRender(element, isShadow) {
-	// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
-	// light DOM slot, it will be disconnected and reconnected again (which will then also trigger a need to render).
-	if (element.parentElement.closest('[data-svelte-retag-render="light"]') !== null) {
-		console.debug('queueForRender(): skipped since a light DOM parent is queued for render:', element);
-		return;
-	}
-
-	// When queuing for render, it's also necessary to identify the DOM rendering type. This is necessary for child
-	// components which are *underneath* a parent that is using light DOM rendering (see above). This helps to ensure
-	// rendering is performed in the correct order (useful for things like context).
-	element.setAttribute('data-svelte-retag-render', isShadow ? 'shadow' : 'light');
-	requestAnimationFrame(renderElements);
-}
-
 
 /**
  * TODO: ISSUE-10: Doc
  *
  * @param {number} timestamp
  */
+// eslint-disable-next-line no-unused-vars
 function renderElements(timestamp) {
-	// Minor Optimization: Reduces quantity of unnecessary querySelectorAll() hits.
-	// TODO: To be honest though, still not 100% sure why this is ever true. Per my understanding of rAF, they are queued
-	//  to run sequentially, even if on the same frame/timestamp.
-	if (rafRunning) {
-		console.debug(`renderElements(${timestamp}): Skipping: Already rendering`);
-		return;
-	}
-	rafRunning = true;
-
 	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
 	if (renderQueue.length === 0) {
-		console.debug(`renderElements(${timestamp}): returned, queue is now empty`);
+		//console.debug(`renderElements(${timestamp}): returned, queue is now empty`);
 		return;
 	}
 
-	let renderTotal = 0;
 	for(let element of renderQueue) {
 		// Element was queued but likely rearranged due to the parent rendering first (resulting in a new instance and this
 		// being forever orphaned).
 		if (!element.isConnected) {
-			console.debug(`renderElements(${timestamp}): skipped, no longer connected:`, element);
+			//console.debug(`renderElements(${timestamp}): skipped, already disconnected:`, element);
 			continue;
 		}
 
-		// Quick double check: Skip any which have *light* DOM parents that are queued for render. See queueForRender() for details.
+		// Quick double check: Skip any which have *light* DOM parents that are queued for render. See _queueForRender() for details.
 		if (element.parentElement.closest('[data-svelte-retag-render="light"]') === null) {
 			element.removeAttribute('data-svelte-retag-render');
 			element._renderSvelteComponent();
-			renderTotal++; // For debug only.
 		} else {
-			console.debug(`renderElements(${timestamp}): skipped since a light DOM parent is queued for render:`, element);
+			//console.debug(`renderElements(${timestamp}): skipped, light DOM parent is queued for render:`, element);
 		}
 	}
-	console.debug(`renderElements(${timestamp}): rendered ${renderTotal} elements`);
-
-	rafRunning = false;
 }
 
 
@@ -379,10 +343,28 @@ export default function(opts) {
 		}
 
 		/**
-		 * TODO: ISSUE-10: DOC
+		 * Queue this element for render in the next animation frame. This offers the opportunity to render known available
+		 * elements all at once and, ideally, from the top down (to preserve context).
 		 */
 		_queueForRender() {
-			queueForRender(this, opts.shadow);
+			// No point if already disconnected. Attempting to hit the parent element will trigger an error.
+			if (!this.isConnected) {
+				this._debug('queueForRender(): skipped, already disconnected');
+				return;
+			}
+
+			// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
+			// light DOM slot, it will be disconnected and reconnected again (which will then also trigger a need to render).
+			if (this.parentElement.closest('[data-svelte-retag-render="light"]') !== null) {
+				this._debug('queueForRender(): skipped, light DOM parent is queued for render');
+				return;
+			}
+
+			// When queuing for render, it's also necessary to identify the DOM rendering type. This is necessary for child
+			// components which are *underneath* a parent that is using light DOM rendering (see above). This helps to ensure
+			// rendering is performed in the correct order (useful for things like context).
+			this.setAttribute('data-svelte-retag-render', opts.shadow ? 'shadow' : 'light');
+			requestAnimationFrame(renderElements);
 		}
 
 		/**
