@@ -98,20 +98,6 @@ export default function(opts) {
 			super();
 
 			this._debug('constructor()');
-			this.rand = Math.random();
-			//console.log(this.rand, 'constructor():', customElementPath(this));
-
-			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
-			// available). Note that we're doing it here in the constructor in case this component has context (so it may
-			// normally only be instantiated from within another component).
-			this.propMap = new Map();
-			// TODO: ISSUE-10: Fails since it also needs context. Make this more consistent or find cleaner method.
-			/*const context = this._getAncestorContext();
-			const propInstance = new opts.component({ target: document.createElement('div'), context });
-			for(let key of Object.keys(propInstance.$$.props)) {
-				this.propMap.set(key.toLowerCase(), key);
-			}
-			propInstance.$destroy();*/
 
 
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
@@ -332,9 +318,6 @@ export default function(opts) {
 				node = node.parentNode;
 				let context = node?.componentInstance?.$$?.context;
 				if (context) {
-					if (!context._id) {
-						context._id = Math.random();
-					}
 					return context;
 				}
 			}
@@ -401,6 +384,24 @@ export default function(opts) {
 				// All other props are pulled from element attributes (see below)...
 			};
 
+
+
+			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
+			// in the shadow DOM.
+			const context = this._getAncestorContext() || new Map();
+
+			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
+			// available). Note that we're doing it here in the constructor in case this component has context (so it may
+			// normally only be instantiated from within another component).
+			// TODO: ISSUE-10: See if possible to cache this in global scope since it doesn't need to be done on every single render.
+			// TODO: ISSUE-10: Also, don't re-initialize if no props actually needed to be translated. Just keep and only reinit if needed.
+			this.propMap = new Map();
+			const propInstance = new opts.component({ target: document.createElement('div'), context });
+			for(let key of Object.keys(propInstance.$$.props)) {
+				this.propMap.set(key.toLowerCase(), key);
+			}
+			propInstance.$destroy();
+
 			// Populate custom element attributes into the props object.
 			for(let attr of [...this.attributes]) {
 				// Note: Skip svelte-retag specific attributes (used for hydration purposes).
@@ -408,10 +409,9 @@ export default function(opts) {
 				props[this._translateAttribute(attr.name)] = attr.value;
 			}
 
-			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
-			// in the shadow DOM.
-			const context = this._getAncestorContext() || new Map();
+
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+
 		}
 
 		/**

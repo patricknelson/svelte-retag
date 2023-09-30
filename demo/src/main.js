@@ -55,6 +55,7 @@ const shadowStylesheet = ''; // TODO: ISSUE-6: Find good solution for defining t
 svelteRetag({
 	component: TabsDemo,
 	tagname: 'tabs-demo',
+	hydratable,
 	debugMode,
 	shadow,
 	href: shadowStylesheet,
@@ -64,6 +65,7 @@ svelteRetag({
 svelteRetag({
 	component: TabPanel,
 	tagname: 'tab-panel',
+	hydratable,
 	debugMode,
 	shadow,
 	href: shadowStylesheet,
@@ -72,6 +74,7 @@ svelteRetag({
 svelteRetag({
 	component: TabButton,
 	tagname: 'tab-button',
+	hydratable,
 	debugMode,
 	shadow,
 	href: shadowStylesheet,
@@ -80,6 +83,7 @@ svelteRetag({
 svelteRetag({
 	component: TabsWrapper,
 	tagname: 'tabs-wrapper',
+	hydratable,
 	debugMode,
 	shadow,
 	href: shadowStylesheet,
@@ -88,6 +92,7 @@ svelteRetag({
 svelteRetag({
 	component: TabList,
 	tagname: 'tab-list',
+	hydratable,
 	debugMode,
 	shadow,
 	href: shadowStylesheet,
