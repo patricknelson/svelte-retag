@@ -4,6 +4,6 @@
 
 <style>
 	.tab-list {
-		border-bottom: 1px solid teal;
+		border-bottom: 1px solid var(--orange);
 	}
 </style>

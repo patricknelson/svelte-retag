@@ -19,7 +19,7 @@
 	}
 
 	.selected {
-		border-bottom: 2px solid teal;
+		border-bottom: 2px solid var(--orange);
 		color: #333;
 	}
 </style>

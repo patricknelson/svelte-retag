@@ -82,7 +82,7 @@
 	}
 
 	a.current {
-		color: #ff3e00;
+		color: var(--orange);
 		text-decoration: underline;
 	}
 </style>
