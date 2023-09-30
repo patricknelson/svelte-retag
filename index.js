@@ -12,6 +12,7 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
  */
 // eslint-disable-next-line no-unused-vars
 function renderElements(timestamp) {
+	// This is key: Fetches elements in document order so we can render top-down (for context).
 	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
 	if (renderQueue.length === 0) {
 		// TODO: Consider build of svelte-retag so we can drop console.logs() when publishing without having to comment out. See: https://github.com/vitejs/vite/discussions/7920
@@ -70,7 +71,8 @@ export default function(opts) {
 	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
 	 * us.
 	 *
-	 * When performing shadow DOM rendering, it provides an un-styled container where we can attach
+	 * When performing shadow DOM rendering, it provides an un-styled container where we can attach the Svelte component
+	 * once it begins rendering.
 	 */
 	if (!window.customElements.get('svelte-retag')) {
 		window.customElements.define('svelte-retag', class extends HTMLElement {
@@ -148,7 +150,7 @@ export default function(opts) {
 
 			// If compiled as IIFE/UMD and executed early, then the document is likely to be in the process of loading
 			// and thus actively parsing tags, including not only this tag but also nested content (which may not yet be
-			// available yet).
+			// available).
 			const isLoading = (document.readyState === 'loading');
 
 			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
@@ -241,7 +243,8 @@ export default function(opts) {
 				// construct/connectedCallback on this one).
 				this._restoreLightSlots();
 
-				// Lastly, unwinding everything in reverse: Remove the special <svelte-tag> wrapper.
+				// Lastly, unwinding everything in reverse: Remove the "light" DOM root (the special <svelte-tag> wrapper) which
+				// is only added during connectedCallback(), unlike shadow DOM which is attached in construct.
 				this.removeChild(this._root);
 			}
 		}
@@ -312,8 +315,10 @@ export default function(opts) {
 		}
 
 		/**
-		 * To support context, this traverses the DOM to find potential parent svelte-retag elements which may contain
-		 * context necessary to render this component. See context functions at: https://svelte.dev/docs/svelte#setcontext
+		 * To support context, this traverses the DOM to find potential parent elements (also managed by svelte-retag) which
+		 * may contain context necessary to render this component.
+		 *
+		 * See context functions at: https://svelte.dev/docs/svelte#setcontext
 		 *
 		 * @returns {Map|null}
 		 */
@@ -475,6 +480,8 @@ export default function(opts) {
 		 * Returns a map of slot names and the corresponding HTMLElement (named slots) or DocumentFragment (default slots).
 		 *
 		 * IMPORTANT: Since this custom element is the "root", these slots must be removed (which is done in THIS method).
+		 *
+		 * TODO: Problematic name. We are "getting" but we're also mangling/mutating state (which *is* necessary). "Get" may be confusing here; is there a better name?
 		 *
 		 * @returns {SlotList}
 		 */
