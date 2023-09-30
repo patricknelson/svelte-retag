@@ -1,11 +1,12 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 
-// TODO: Consider build of svelte-retag so we can drop console.logs() when publishing. See: https://github.com/vitejs/vite/discussions/7920
-
-
 /**
- * TODO: ISSUE-10: Doc
+ * Processes the queued set of svelte-retag managed elements which have been initialized, connected and flagged as ready
+ * for render. This is done just before paint with the goal of processing as many as possible at once not only for speed
+ * but also to ensure we can render properly from the top down (parent to child). This is necessary, as the actual
+ * construct() and connectedCallback()'s for custom elements depends largely on *when* the elements are defined and
+ * encountered in the DOM (can be in any order). This allows us to better control that process.
  *
  * @param {number} timestamp
  */
@@ -13,6 +14,7 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 function renderElements(timestamp) {
 	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
 	if (renderQueue.length === 0) {
+		// TODO: Consider build of svelte-retag so we can drop console.logs() when publishing without having to comment out. See: https://github.com/vitejs/vite/discussions/7920
 		//console.debug(`renderElements(${timestamp}): returned, queue is now empty`);
 		return;
 	}
@@ -310,14 +312,17 @@ export default function(opts) {
 		}
 
 		/**
-		 * TODO: ISSUE-10: Doc
+		 * To support context, this traverses the DOM to find potential parent svelte-retag elements which may contain
+		 * context necessary to render this component. See context functions at: https://svelte.dev/docs/svelte#setcontext
+		 *
+		 * @returns {Map|null}
 		 */
 		_getAncestorContext() {
 			let node = this;
 			while(node.parentNode) {
 				node = node.parentNode;
 				let context = node?.componentInstance?.$$?.context;
-				if (context) {
+				if (context instanceof Map) {
 					return context;
 				}
 			}
@@ -354,11 +359,23 @@ export default function(opts) {
 		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
 		 * (with slots initialized elsewhere).
 		 *
-		 * TODO: ISSUE-10: Add note about the necessity to render components in order and about how there's now a render queue.
+		 * IMPORTANT:
 		 *
-		 * NOTE: Despite the intuitive name, this method is private since its functionality requires a deeper understanding
+		 * Despite the intuitive name, this method is private since its functionality requires a deeper understanding
 		 * of how it depends on current internal state and how it alters internal state. Be sure to study how it's called
-		 * before calling it yourself externally. 🔥🐉
+		 * before calling it yourself externally. ("Yarrr! Here be dragons! 🔥🐉")
+		 *
+		 * That said... this is currently the workflow:
+		 *
+		 * 1. Wait for connection to DOM
+		 * 2. Ensure slots are properly prepared (e.g. in case of hydration) or observed (in case actively parsing DOM, e.g.
+		 *    IIFE/UMD or shadow DOM) in case there are any changes *after* this render
+		 * 3. _queueForRender(): Kick off to requestAnimationFrame() to queue render of the component (instead of rendering
+		 *    immediately) to ensure that all currently connected and available components are taken into account (this is
+		 *    necessary for properly supporting context to prevent from initializing components out of order).
+		 * 4. renderElements(): Renders through the DOM tree in document order and from the top down (parent to child),
+		 *    reaching this element instantiating this component, ensuring context is preserved.
+		 *
 		 */
 		_renderSvelteComponent() {
 			this._debug('renderSvelteComponent()');
@@ -384,10 +401,7 @@ export default function(opts) {
 				// All other props are pulled from element attributes (see below)...
 			};
 
-
-
-			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
-			// in the shadow DOM.
+			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
 			const context = this._getAncestorContext() || new Map();
 
 			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
@@ -409,9 +423,9 @@ export default function(opts) {
 				props[this._translateAttribute(attr.name)] = attr.value;
 			}
 
-
+			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
+			// in the shadow DOM.
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
-
 		}
 
 		/**
@@ -473,7 +487,7 @@ export default function(opts) {
 			 * NAMED SLOTS *
 			 ***************/
 
-				// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
+			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			for(let candidate of queryNamedSlots) {
 				// Skip this slot if it doesn't happen to belong to THIS custom element.
@@ -500,10 +514,10 @@ export default function(opts) {
 			 * DEFAULT SLOT (UNNAMED) *
 			 **************************/
 
-				// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
-				// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
-				// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
-				// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
+			// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
+			// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
+			// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
+			// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
 			let fragment = document.createDocumentFragment();
 
 			// For hydratable components, we have to nest these nodes under a tag that we can still recognize once
