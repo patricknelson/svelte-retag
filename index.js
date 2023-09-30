@@ -1,70 +1,61 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
-let renderQueue = [];
+
+// TODO: Consider build of svelte-retag so we can drop console.logs() when publishing. See: https://github.com/vitejs/vite/discussions/7920
+
+
 let rafRunning = false;
-let rafQueued = false;
 
 function queueForRender(element) {
-	if (renderQueue.indexOf(element) !== -1) {
-		// Skip since this element is already queued.
-		console.debug('queueForRender(): skipped since its already queued:', element);
-		return;
-	}
-
 	// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
-	// light DOM slot, it will be disconnected and reconnected again
+	// light DOM slot, it will be disconnected and reconnected again (which will then also trigger a need to render).
 	if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') !== null) {
 		console.debug('queueForRender(): skipped since a light DOM parent is queued for render:', element);
 		return;
 	}
 
-	console.debug('queueForRender(): successfully queued for:', element);
+	console.debug('queueForRender(): queued for:', element);
 	element.setAttribute('data-svelte-retag-render', '');
-
-	// TODO: ISSUE-10: Is this necessary now? Maybe instead we should just use document.querySelectorAll('[data-svelte-retag-render]')
-	//  which also happens to enforce document order, which also happens to be consistent with the order necessary to
-	//  properly implement context (i.e. initialize parent to child) for the shadow DOM as well?
-	renderQueue.push(element);
-
-	// Even though it won't hurt, it's probably best to ensure we don't queue up our raF function to run more than
-	// necessary. Granted, it could run
-	if (!rafQueued) {
-		requestAnimationFrame(renderElements);
-		rafQueued = true;
-	}
+	requestAnimationFrame(renderElements);
 }
 
-
-let renderOrder = 0;
-
-function renderElements() {
-	if (renderQueue.length === 0) {
-		console.warn('renderQueue: Skipping: Empty');
-		return;
-	}
+function renderElements(timestamp) {
+	// Minor Optimization: Reduces quantity of unnecessary querySelectorAll() hits.
+	// TODO: To be honest though, still not 100% sure why this is ever true. Per my understanding of rAF, they are queued
+	//  to run sequentially, even if on the same frame/timestamp.
 	if (rafRunning) {
-		console.warn('renderQueue: Skipping: Already rendering');
+		console.warn(`renderElements(${timestamp}): Skipping: Already rendering`);
+		return;
+	}
+	rafRunning = true;
+
+	console.debug(`raF: renderElements(${timestamp})`);
+
+	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
+	if (renderQueue.length === 0) {
+		console.debug(`renderElements(${timestamp}): returned, queue is now empty`);
 		return;
 	}
 
-	console.debug('raF: renderElements()');
-
-	rafRunning = true;
 
 	// For each element, double check and skip any which have *light* DOM parents that are queued for render. The reason
 	// for this is that they will be disconnected  and queued for render later anyway.
 	for (let element of renderQueue) {
+		// Element was queued but likely rearranged due to the parent rendering first (resulting in a new instance and this
+		// being forever orphaned).
+		if (!element.isConnected) {
+			console.debug(`renderElements(${timestamp}): skipped, no longer connected:`, element);
+			continue;
+		}
+
 		if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') === null) {
 			element.removeAttribute('data-svelte-retag-render');
 			element._renderSvelteComponent();
-
-			// TODO: ISSUE-10: Remove or make optional once done with development.
-			renderOrder++;
-			element.setAttribute('data-svelte-retag-render-order', renderOrder);
+		} else {
+			console.debug(`renderElements(${timestamp}): skipped since a light DOM parent is queued for render:`, element);
 		}
 	}
 
-	rafQueued = false;
 	rafRunning = false;
 }
 
@@ -182,6 +173,7 @@ export default function(opts) {
 			// Identifies DOM rendering type to help differentiate during deferred rendering. This is necessary particularly
 			// for any type of child components which are *underneath* a parent that is using light DOM rendering. This helps
 			// to ensure rendering is performed in the correct order (useful for things like context).
+			// TODO: Ok to just consolidate this into data-svelte-retag-render (and/or refactor to data-svelte-retag-render-dom)?
 			this.setAttribute('data-svelte-retag-dom', opts.shadow ? 'shadow' : 'light');
 
 			/**
@@ -263,8 +255,8 @@ export default function(opts) {
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
 
-			// TODO: ISSUE-10: Doc
-			this.removeAttribute('data-svelte-retag');
+			// Remove DOM type flag. TODO: Potentially consolidate to the render flag instead, see connectedCallback().
+			this.removeAttribute('data-svelte-retag-dom');
 
 			// Remove hydration flag, if present. This component will be able to be rendered from scratch instead.
 			this.removeAttribute('data-svelte-retag-hydratable');
@@ -362,8 +354,6 @@ export default function(opts) {
 
 		/**
 		 * TODO: ISSUE-10: Doc
-		 *
-		 * TODO: Maybe this should be inverted; i.e. instead of getting context from parent, have parent pass it to the child during render.
 		 */
 		_getAncestorContext()  {
 			let node = this;
@@ -432,7 +422,6 @@ export default function(opts) {
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
 			const context = this._getAncestorContext() || new Map();
-			console.log(this.tagName, context._id);
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
 		}
 
