@@ -60,21 +60,6 @@ svelteRetag({
 	href: shadowStylesheet,
 });
 
-svelteRetag({
-	component: TabsWrapper,
-	tagname: 'tabs-wrapper',
-	debugMode,
-	shadow,
-	href: shadowStylesheet,
-});
-
-svelteRetag({
-	component: TabList,
-	tagname: 'tab-list',
-	debugMode,
-	shadow,
-	href: shadowStylesheet,
-});
 
 svelteRetag({
 	component: TabPanel,
@@ -87,6 +72,22 @@ svelteRetag({
 svelteRetag({
 	component: TabButton,
 	tagname: 'tab-button',
+	debugMode,
+	shadow,
+	href: shadowStylesheet,
+});
+
+svelteRetag({
+	component: TabsWrapper,
+	tagname: 'tabs-wrapper',
+	debugMode,
+	shadow,
+	href: shadowStylesheet,
+});
+
+svelteRetag({
+	component: TabList,
+	tagname: 'tab-list',
 	debugMode,
 	shadow,
 	href: shadowStylesheet,

@@ -1,5 +1,6 @@
 <script>
 	import { TabsWrapper, TabList, TabPanel, TabButton } from './tabs';
+	import Counter from './Counter.svelte';
 </script>
 
 <TabsWrapper>
@@ -14,28 +15,27 @@
 			<TabList>
 				<TabButton>nested one</TabButton>
 				<TabButton>nested two</TabButton>
-				<TabButton>nested three</TabButton>
 			</TabList>
 
 			<TabPanel>
 				<h2>First nested panel</h2>
+				<Counter count="1" award="5"/>
 			</TabPanel>
 
 			<TabPanel>
 				<h2>Second nested panel</h2>
-			</TabPanel>
-
-			<TabPanel>
-				<h2>Third nested panel</h2>
+				<Counter count="2" award="5"/>
 			</TabPanel>
 		</TabsWrapper>
 	</TabPanel>
 
 	<TabPanel>
 		<h2>Second panel</h2>
+		<Counter count="3" award="5"/>
 	</TabPanel>
 
 	<TabPanel>
 		<h2>Third panel</h2>
+		<Counter count="4" award="5"/>
 	</TabPanel>
 </TabsWrapper>

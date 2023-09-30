@@ -3,33 +3,44 @@ import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 // TODO: Consider build of svelte-retag so we can drop console.logs() when publishing. See: https://github.com/vitejs/vite/discussions/7920
 
-
 let rafRunning = false;
 
-function queueForRender(element) {
+/**
+ * TODO: ISSUE-10: Doc
+ *
+ * @param {HTMLElement} element
+ * @param {Boolean} isShadow
+ */
+function queueForRender(element, isShadow) {
 	// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
 	// light DOM slot, it will be disconnected and reconnected again (which will then also trigger a need to render).
-	if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') !== null) {
+	if (element.parentElement.closest('[data-svelte-retag-render="light"]') !== null) {
 		console.debug('queueForRender(): skipped since a light DOM parent is queued for render:', element);
 		return;
 	}
 
-	console.debug('queueForRender(): queued for:', element);
-	element.setAttribute('data-svelte-retag-render', '');
+	// When queuing for render, it's also necessary to identify the DOM rendering type. This is necessary for child
+	// components which are *underneath* a parent that is using light DOM rendering (see above). This helps to ensure
+	// rendering is performed in the correct order (useful for things like context).
+	element.setAttribute('data-svelte-retag-render', isShadow ? 'shadow' : 'light');
 	requestAnimationFrame(renderElements);
 }
 
+
+/**
+ * TODO: ISSUE-10: Doc
+ *
+ * @param {number} timestamp
+ */
 function renderElements(timestamp) {
 	// Minor Optimization: Reduces quantity of unnecessary querySelectorAll() hits.
 	// TODO: To be honest though, still not 100% sure why this is ever true. Per my understanding of rAF, they are queued
 	//  to run sequentially, even if on the same frame/timestamp.
 	if (rafRunning) {
-		console.warn(`renderElements(${timestamp}): Skipping: Already rendering`);
+		console.debug(`renderElements(${timestamp}): Skipping: Already rendering`);
 		return;
 	}
 	rafRunning = true;
-
-	console.debug(`raF: renderElements(${timestamp})`);
 
 	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
 	if (renderQueue.length === 0) {
@@ -37,10 +48,8 @@ function renderElements(timestamp) {
 		return;
 	}
 
-
-	// For each element, double check and skip any which have *light* DOM parents that are queued for render. The reason
-	// for this is that they will be disconnected  and queued for render later anyway.
-	for (let element of renderQueue) {
+	let renderTotal = 0;
+	for(let element of renderQueue) {
 		// Element was queued but likely rearranged due to the parent rendering first (resulting in a new instance and this
 		// being forever orphaned).
 		if (!element.isConnected) {
@@ -48,13 +57,16 @@ function renderElements(timestamp) {
 			continue;
 		}
 
-		if (element.parentElement.closest('[data-svelte-retag-render][data-svelte-retag-dom="light"]') === null) {
+		// Quick double check: Skip any which have *light* DOM parents that are queued for render. See queueForRender() for details.
+		if (element.parentElement.closest('[data-svelte-retag-render="light"]') === null) {
 			element.removeAttribute('data-svelte-retag-render');
 			element._renderSvelteComponent();
+			renderTotal++; // For debug only.
 		} else {
 			console.debug(`renderElements(${timestamp}): skipped since a light DOM parent is queued for render:`, element);
 		}
 	}
+	console.debug(`renderElements(${timestamp}): rendered ${renderTotal} elements`);
 
 	rafRunning = false;
 }
@@ -170,12 +182,6 @@ export default function(opts) {
 		connectedCallback() {
 			this._debug('connectedCallback()');
 
-			// Identifies DOM rendering type to help differentiate during deferred rendering. This is necessary particularly
-			// for any type of child components which are *underneath* a parent that is using light DOM rendering. This helps
-			// to ensure rendering is performed in the correct order (useful for things like context).
-			// TODO: Ok to just consolidate this into data-svelte-retag-render (and/or refactor to data-svelte-retag-render-dom)?
-			this.setAttribute('data-svelte-retag-dom', opts.shadow ? 'shadow' : 'light');
-
 			/**
 			 * TODO: Light DOM: Potential optimization opportunities:
 			 *  1. Don't bother setting up <svelte-retag> wrapper if the component doesn't have a default slot and isn't hydratable
@@ -255,8 +261,9 @@ export default function(opts) {
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
 
-			// Remove DOM type flag. TODO: Potentially consolidate to the render flag instead, see connectedCallback().
-			this.removeAttribute('data-svelte-retag-dom');
+			// Remove render flag (if present). This could happen in case the element is disconnected while waiting to render
+			// (particularly if slotted under a light DOM parent).
+			this.removeAttribute('data-svelte-retag-render');
 
 			// Remove hydration flag, if present. This component will be able to be rendered from scratch instead.
 			this.removeAttribute('data-svelte-retag-hydratable');
@@ -355,9 +362,9 @@ export default function(opts) {
 		/**
 		 * TODO: ISSUE-10: Doc
 		 */
-		_getAncestorContext()  {
+		_getAncestorContext() {
 			let node = this;
-			while (node.parentNode) {
+			while(node.parentNode) {
 				node = node.parentNode;
 				let context = node?.componentInstance?.$$?.context;
 				if (context) {
@@ -375,7 +382,7 @@ export default function(opts) {
 		 * TODO: ISSUE-10: DOC
 		 */
 		_queueForRender() {
-			queueForRender(this);
+			queueForRender(this, opts.shadow);
 		}
 
 		/**
@@ -484,7 +491,7 @@ export default function(opts) {
 			 * NAMED SLOTS *
 			 ***************/
 
-			// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
+				// Look for named slots below this element. IMPORTANT: This may return slots nested deeper (see check in forEach below).
 			const queryNamedSlots = this.querySelectorAll('[slot]');
 			for(let candidate of queryNamedSlots) {
 				// Skip this slot if it doesn't happen to belong to THIS custom element.
@@ -511,10 +518,10 @@ export default function(opts) {
 			 * DEFAULT SLOT (UNNAMED) *
 			 **************************/
 
-			// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
-			// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
-			// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
-			// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
+				// "Unwrap" the remainder of this tag by iterating through child nodes and placing them into a fragment which
+				// we can use as our default slot. Importantly, we need to ensure we skip our special <svelte-retag> wrapper.
+				// Here we use a special <svelte-retag-default> custom element that allows us to target it later in case we
+				// need to hydrate it (e.g. tag was rendered via SSG/SSR and disconnectedCallback() was not run).
 			let fragment = document.createDocumentFragment();
 
 			// For hydratable components, we have to nest these nodes under a tag that we can still recognize once
