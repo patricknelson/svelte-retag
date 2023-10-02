@@ -64,15 +64,15 @@
 		font-size: 1em;
 		font-weight: 500;
 		font-family: inherit;
-		background-color: #f9f9f9;
+		background-color: var(--light-gray);
 		cursor: pointer;
 		transition: border-color 0.25s;
 		margin: 10px 0;
-		/*color: $dark-text-color;*/
+		color: var(--dark-gray);
 	}
 
 	button:hover {
-		border-color: #646cff;
+		border-color: var(--link-color);
 	}
 
 	button:focus-visible {
