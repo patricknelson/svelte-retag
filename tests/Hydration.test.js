@@ -1,4 +1,4 @@
-import { describe, beforeAll, afterEach, test, expect } from 'vitest';
+import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Hydration from './Hydration.svelte';
 import svelteRetag from '../index';
 import { normalizeWhitespace } from './test-utils.js';
@@ -10,12 +10,18 @@ describe('<hydration-tag>: Incorporation of special hydration attributes and tag
 
 	beforeAll(() => {
 		svelteRetag({ component: Hydration, tagname: 'hydration-tag', shadow: false, debugMode, hydratable: true });
+
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
 	});
 
 	afterEach(() => {
 		if (el) {
 			el.remove();
 		}
+	});
+
+	afterAll(() => {
+		window.requestAnimationFrame.mockRestore();
 	});
 
 	test('hydration with named slot and default content', async () => {
