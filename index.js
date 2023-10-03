@@ -1,7 +1,9 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 
-// TODO: ISSUE-10: Doc
+// Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
+// global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
+// hits to attributeChangedCallback().
 const propMapCache = new Map();
 
 
@@ -310,7 +312,7 @@ export default function(opts) {
 		_translateAttribute(attributeName) {
 			// In the unlikely scenario that a browser somewhere doesn't do this for us (or maybe we're in a quirks mode or something...)
 			attributeName = attributeName.toLowerCase();
-			if (this.propMap.has(attributeName)) {
+			if (this.propMap && this.propMap.has(attributeName)) {
 				return this.propMap.get(attributeName);
 			} else {
 				this._debug(`_translateAttribute(): ${attributeName} not found`);
@@ -400,41 +402,60 @@ export default function(opts) {
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
 			this._root.innerHTML = '';
 
-			// Props passed to Svelte component constructor.
+			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
+			const context = this._getAncestorContext() || new Map();
+
+			// Props always passed to Svelte component constructor.
 			let props = {
 				$$scope: {},
 
 				// Convert our list of slots into Svelte-specific slot objects
 				$$slots: createSvelteSlots(this.slotEls),
 
-				// All other props are pulled from element attributes (see below)...
+				// All other *initial* props are pulled dynamically from element attributes (see proxy below)...
 			};
 
-			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
-			const context = this._getAncestorContext() || new Map();
-
-			// Temporarily instantiate the component ahead of time just so we can get its available properties (which *are*
-			// statically available).
-			//
-			// Note that we're doing it here in the constructor in case this component has context (so it may
-			// normally only be instantiated from within another component).
-			if (propMapCache.has(this.tagName)) {
-				this.propMap = propMapCache.get(this.tagName);
-			} else {
+			// Conveying props while translating them FROM a case-insensitive form like attributes (which are forced
+			// case-insensitive) TO a case-sensitive form (which is required by the component) can be very tricky. This is
+			// because we really cannot know the correct case until AFTER the component is instantiated. Therefore, a proxy is
+			// a great way to infer the correct case, since by design, all components attempt to access ALL their props when
+			// instantiated. Once accessed the first time for a particular tag, we no longer need to proxy since we know for
+			// certain that the same tag will be used for any particular component (whose props will not change).
+			if (!propMapCache.has(this.tagName)) {
+				// Initialize mapping of props for this tag for use later. This way, we can avoid proxying on every single
+				// component render/instantiation but also for attributeChangedCallback().
 				this.propMap = new Map();
-				const propInstance = new opts.component({ target: document.createElement('div'), context });
-				for(let key of Object.keys(propInstance.$$.props)) {
-					this.propMap.set(key.toLowerCase(), key);
-				}
-				propInstance.$destroy();
 				propMapCache.set(this.tagName, this.propMap);
-			}
 
-			// Populate custom element attributes into the props object.
-			for(let attr of [...this.attributes]) {
-				// Note: Skip svelte-retag specific attributes (used for hydration purposes).
-				if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
-				props[this._translateAttribute(attr.name)] = attr.value;
+				props = new Proxy(props, {
+					get: (target, prop) => {
+						// Warm cache with prop translations from forced lowercase to their real case.
+						let propName = prop.toString();
+						if (prop.indexOf('$$') === -1) {
+							this.propMap.set(propName.toLowerCase(), propName);
+						}
+
+						// While here, see if this attempted access matches an element attribute. Note, this lookup is
+						// already case-insensitive, see: https://dom.spec.whatwg.org/#namednodemap
+						let attribValue = this.attributes.getNamedItem(propName);
+						if (attribValue !== null) {
+							return attribValue.value;
+						} else {
+							// Fail over to what would have otherwise been returned.
+							return target[prop];
+						}
+					},
+				});
+
+			} else {
+				// Skip the proxying of props and just recycle the cached mapping to populate custom element attributes into the
+				// props object with the correct case.
+				this.propMap = propMapCache.get(this.tagName);
+				for(let attr of [...this.attributes]) {
+					// Note: Skip svelte-retag specific attributes (used for hydration purposes).
+					if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
+					props[this._translateAttribute(attr.name)] = attr.value;
+				}
 			}
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or

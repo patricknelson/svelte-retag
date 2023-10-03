@@ -7,7 +7,7 @@ import Counter from './lib/Counter.svelte';
 import Example from './lib/Example.svelte';
 
 const params = new URLSearchParams(location.search);
-const debugMode = false;
+const debugMode = !!params.get('debug');
 const hydratable = !!params.get('hydratable');
 
 svelteRetag({
