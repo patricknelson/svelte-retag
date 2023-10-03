@@ -1,6 +1,10 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 
+// TODO: ISSUE-10: Doc
+const propMapCache = new Map();
+
+
 /**
  * Processes the queued set of svelte-retag managed elements which have been initialized, connected and flagged as ready
  * for render. This is done just before paint with the goal of processing as many as possible at once not only for speed
@@ -409,17 +413,22 @@ export default function(opts) {
 			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
 			const context = this._getAncestorContext() || new Map();
 
-			// Temporarily instantiate the component ahead of time just so we can get its available properties (statically
-			// available). Note that we're doing it here in the constructor in case this component has context (so it may
+			// Temporarily instantiate the component ahead of time just so we can get its available properties (which *are*
+			// statically available).
+			//
+			// Note that we're doing it here in the constructor in case this component has context (so it may
 			// normally only be instantiated from within another component).
-			// TODO: ISSUE-10: See if possible to cache this in global scope since it doesn't need to be done on every single render.
-			// TODO: ISSUE-10: Also, don't re-initialize if no props actually needed to be translated. Just keep and only reinit if needed.
-			this.propMap = new Map();
-			const propInstance = new opts.component({ target: document.createElement('div'), context });
-			for(let key of Object.keys(propInstance.$$.props)) {
-				this.propMap.set(key.toLowerCase(), key);
+			if (propMapCache.has(this.tagName)) {
+				this.propMap = propMapCache.get(this.tagName);
+			} else {
+				this.propMap = new Map();
+				const propInstance = new opts.component({ target: document.createElement('div'), context });
+				for(let key of Object.keys(propInstance.$$.props)) {
+					this.propMap.set(key.toLowerCase(), key);
+				}
+				propInstance.$destroy();
+				propMapCache.set(this.tagName, this.propMap);
 			}
-			propInstance.$destroy();
 
 			// Populate custom element attributes into the props object.
 			for(let attr of [...this.attributes]) {
