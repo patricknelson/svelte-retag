@@ -54,6 +54,48 @@ describe('<context-parent> and <context-child> (Shared context between component
 		expect(childVal()).toBe('2');
 	});
 
-	// TODO: nested context
+	test('nested context', async () => {
+		el = document.createElement('div');
+		el.innerHTML = `
+			<!-- Top level (note: data-svelte-retag-* prefixes are used to ensure they are ignored but can be queried below) -->
+			<context-parent initialvalue="3" data-svelte-retag-top>
+				<context-child></context-child>
+
+				<!-- Nested -->
+				<context-parent initialvalue="4" data-svelte-retag-nested>
+					<context-child></context-child>
+				</context-parent>
+
+			</context-parent>
+		`;
+		document.body.appendChild(el);
+		const parentTop = document.querySelector('[data-svelte-retag-top]');
+		const parentNested = document.querySelector('[data-svelte-retag-nested]');
+
+		const parentVal = (level) => level.querySelector('.parent-value').innerHTML;
+		const childVal = (level) => level.querySelector('.child-value').innerHTML;
+
+		// Same as above, except we need to ensure that the top level shares values with itself but not with the nested context.
+		expect(parentVal(parentTop)).toBe('3');
+		expect(childVal(parentTop)).toBe('3');
+		expect(parentVal(parentNested)).toBe('4');
+		expect(childVal(parentNested)).toBe('4');
+
+		// Apply a change, ensure the change is cascaded but doesn't cascade to the child context.
+		parentTop.setAttribute('initialvalue', 5);
+		await tick();
+		expect(parentVal(parentTop)).toBe('5');
+		expect(childVal(parentTop)).toBe('5');
+		expect(parentVal(parentNested)).toBe('4'); // should remain unchanged
+		expect(childVal(parentNested)).toBe('4'); // should remain unchanged
+
+		// Now update nested, verify parent is unchanged and that the nested has been updated.
+		parentNested.setAttribute('initialvalue', 6);
+		await tick();
+		expect(parentVal(parentTop)).toBe('5');
+		expect(childVal(parentTop)).toBe('5');
+		expect(parentVal(parentNested)).toBe('6'); // now it should change
+		expect(childVal(parentNested)).toBe('6'); // now it should change
+	});
 
 });
