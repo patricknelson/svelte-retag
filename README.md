@@ -105,8 +105,8 @@ On the immediate horizon:
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
 - [x] Svelte 4 support (tested)
+- [x] Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR at https://github.com/patricknelson/svelte-retag/pull/18)
 - [x] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
-- [ ] ⏳ Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR at https://github.com/patricknelson/svelte-retag/pull/18)
 
 Milestones:
 
