@@ -461,6 +461,8 @@ export default function(opts) {
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+
+			this._debug('renderSvelteComponent(): completed');
 		}
 
 		/**
@@ -736,7 +738,7 @@ export default function(opts) {
 		_debug() {
 			if (opts.debugMode) {
 				if (opts.debugMode === 'cli') {
-					console.log.apply(null, [...arguments]);
+					console.log.apply(null, [this.tagName, ...arguments]);
 				} else {
 					console.log.apply(null, [this, ...arguments]);
 				}

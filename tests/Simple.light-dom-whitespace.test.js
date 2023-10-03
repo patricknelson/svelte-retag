@@ -1,7 +1,7 @@
 import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Simple from './Simple.svelte';
 import svelteRetag from '../index';
-import { normalizeWhitespace } from './test-utils.js';
+import { normalizeWhitespace, syncRaf } from './test-utils.js';
 
 let el = null;
 let debugMode = false; // set to 'cli' to see debug output.
@@ -11,7 +11,7 @@ describe('<simple-tag> (Light DOM)', () => {
 	beforeAll(() => {
 		svelteRetag({ component: Simple, tagname: 'simple-tag', shadow: false, debugMode });
 
-		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
 
 	afterEach(() => {

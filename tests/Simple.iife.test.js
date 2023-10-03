@@ -1,7 +1,7 @@
 import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Simple from './Simple.svelte';
 import svelteRetag from '../index';
-import { setReadyState } from './test-utils.js';
+import { setReadyState, syncRaf } from './test-utils.js';
 import { tick } from 'svelte';
 
 let el = null;
@@ -12,7 +12,7 @@ describe('IIFE: Early execution tests (light DOM only)', () => {
 	beforeAll(() => {
 		svelteRetag({ component: Simple, tagname: 'simple-tag', shadow: false, debugMode });
 
-		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
 
 	afterEach(() => {

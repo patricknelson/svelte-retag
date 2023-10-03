@@ -2,6 +2,7 @@ import { describe, beforeAll, afterAll, test, expect, vi } from 'vitest';
 import svelteRetag from '../index.js';
 import TestTag from './TestTag.svelte';
 import { tick } from 'svelte';
+import { syncRaf } from './test-utils.js';
 
 // See vite.config.js for configuration details.
 
@@ -14,7 +15,7 @@ describe('<test-tag> (Shadow DOM)', () => {
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
 
-		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
 
 	afterAll(() => {

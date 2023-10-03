@@ -1,7 +1,7 @@
 import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import TestTag from './TestTag.svelte';
 import svelteRetag from '../index';
-import { normalizeWhitespace } from './test-utils.js';
+import { normalizeWhitespace, syncRaf } from './test-utils.js';
 
 // See vite.config.js for configuration details.
 
@@ -14,7 +14,7 @@ describe('<test-tag> (Light DOM)', () => {
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-tag', shadow: false });
 
-		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => cb(new Date().getTime()));
+		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
 
 	afterEach(() => {
