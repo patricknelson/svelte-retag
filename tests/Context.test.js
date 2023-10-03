@@ -54,7 +54,7 @@ describe('<context-parent> and <context-child> (Shared context between component
 		expect(childVal()).toBe('2');
 	});
 
-	test('nested context', async () => {
+	test('nested context (top level does not affect nested context)', async () => {
 		el = document.createElement('div');
 		el.innerHTML = `
 			<!-- Top level (note: data-svelte-retag-* prefixes are used to ensure they are ignored but can be queried below) -->
@@ -96,6 +96,47 @@ describe('<context-parent> and <context-child> (Shared context between component
 		expect(childVal(parentTop)).toBe('5');
 		expect(parentVal(parentNested)).toBe('6'); // now it should change
 		expect(childVal(parentNested)).toBe('6'); // now it should change
+	});
+
+	test('nested context (does not affect top level context)', async () => {
+		// Create a DOM element with a Svelte component that has a parent and child context
+		const el = document.createElement('div');
+		el.innerHTML = `
+		  <context-parent initialvalue="7" data-svelte-retag-top>
+				<context-child></context-child>
+
+				<!-- Nested -->
+				<context-parent initialvalue="8" data-svelte-retag-nested>
+					<context-child></context-child>
+				</context-parent>
+
+		  </context-parent>
+		`;
+		document.body.appendChild(el);
+
+		// Get references to the top level and nested context elements
+		const parentTop = document.querySelector('[data-svelte-retag-top]');
+		const parentNested = document.querySelector('[data-svelte-retag-nested]');
+
+		// Get functions to retrieve the values of the parent and child contexts
+		const parentVal = (level) => level.querySelector('.parent-value').innerHTML;
+		const childVal = (level) => level.querySelector('.child-value').innerHTML;
+
+		// Ensure that the top level and nested contexts have the expected initial values
+		expect(parentVal(parentTop)).toBe('7');
+		expect(childVal(parentTop)).toBe('7');
+		expect(parentVal(parentNested)).toBe('8');
+		expect(childVal(parentNested)).toBe('8');
+
+		// Change the initial value of the nested context
+		parentNested.setAttribute('initialvalue', 5);
+		await tick();
+
+		// Ensure that the change in the nested context does not affect the top level context
+		expect(parentVal(parentTop)).toBe('7');
+		expect(childVal(parentTop)).toBe('7');
+		expect(parentVal(parentNested)).toBe('5');
+		expect(childVal(parentNested)).toBe('5');
 	});
 
 });
