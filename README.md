@@ -4,26 +4,24 @@
 
 ![Unit Tests](https://github.com/patricknelson/svelte-retag/actions/workflows/unit-tests.yml/badge.svg)
 
-A web component wrapper for Svelte 3 and 4. Embeds your Svelte app or components inside custom elements using the light DOM _or_
-shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
+A web component wrapper for Svelte 3 and 4. Embeds your Svelte app or components inside custom elements using the light
+DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Svelte app.
 
 **Demo:** https://svelte-retag.vercel.app/
 
 ## Core features
 
-* 🌟 **Light DOM:** Allows you to render your Svelte components as custom elements in the light DOM as usual (without
-	requiring use of the shadow DOM). Doing so allows you to take full advantage of global styles while still maintaining
-	encapsulation of your component specific styles, utilizing web fonts and so on.
-* 🎰 **Slot Support:** Supports default and named slots in the light DOM on initial page load, including nesting.
-* 🏃‍♂️ **Instant:** Proactively renders the Svelte component _immediately_ into the light DOM as soon as the
-	parser encounters the custom element while dynamically re-rendering slot content as the parser moves along. This
-	reduces CLS (Cumulative Layout Shift) and makes it interactive more quickly _without_ having to wait for the document
-	to finish loading. _(Note: Requires compiling to IIFE format in your rollup config.)_
-* ⚡ **Vite HMR:** Unlike Svelte, these custom elements are also compatible with Vite's HMR. It avoids the infamous
-	error `Uncaught DOMException: Failed to execute 'define' on 'CustomElementRegistry': the name "example-component" has already been used with this registry`
-* ⚙ **Flexibility:** Allows you to use your component as you normally would within Svelte (`<ExampleComponent />`) _and_
-	as a custom element outside of Svelte (`<example-component></example-component>`). You only need to define the
-	components that need to be available as custom elements along with their associated tag names.
+* 🌟 **Light DOM:** Allows you to render your Svelte components as custom elements in the light DOM as usual.
+* 🎰 **Slots:** Supports default and named slots in the _light DOM_ (supports nesting).
+* 🧭 **Context:** Use `setContext()` and `getContext()` and just compose your components as custom elements as you
+	normally would ([see live tab demo](https://svelte-retag.vercel.app/)). Supports nesting.
+* ⚡ **Vite HMR:** Unlike Svelte, these custom elements are also compatible with Vite's HMR. It avoids the
+	infamous `Failed to execute 'define' on 'CustomElementRegistry'` errors.
+* 🏃‍♂️ **IIFE/UMD:** Supports building to `iife` and `umd` for eager rendering to the light DOM, as soon as the
+	parser encounters the custom element. Reduces CLS (Cumulative Layout Shift), making it interactive more quickly
+  _without_ waiting for `defer`'d scripts (such as modules).
+* ⚙ **Composability:** `svelte-retag` gives you the flexility to use your component as you normally would within Svelte
+	_and_ as a custom element outside of Svelte (supporting both `<ExampleComponent />` and `<example-component>`).
 * 💼 **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
 	regardless of the stack (great for upgrading legacy applications).
 
@@ -101,8 +99,9 @@ On the immediate horizon:
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
 - [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
 - [x] Svelte 4 support (tested)
+- [x] Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR
+	at https://github.com/patricknelson/svelte-retag/pull/18)
 - [x] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
-- [ ] ⏳ Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR at https://github.com/patricknelson/svelte-retag/pull/18)
 
 Milestones:
 

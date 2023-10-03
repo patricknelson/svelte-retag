@@ -1,11 +1,49 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
+
+// Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
+// global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
+// hits to attributeChangedCallback().
+const propMapCache = new Map();
+
+
 /**
- * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
- * default slot content.
+ * Processes the queued set of svelte-retag managed elements which have been initialized, connected and flagged as ready
+ * for render. This is done just before paint with the goal of processing as many as possible at once not only for speed
+ * but also to ensure we can render properly from the top down (parent to child). This is necessary, as the actual
+ * construct() and connectedCallback()'s for custom elements depends largely on *when* the elements are defined and
+ * encountered in the DOM (can be in any order). This allows us to better control that process.
  *
- * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
+ * @param {number} timestamp
  */
+// eslint-disable-next-line no-unused-vars
+function renderElements(timestamp) {
+	// This is key: Fetches elements in document order so we can render top-down (for context).
+	let renderQueue = document.querySelectorAll('[data-svelte-retag-render]');
+	if (renderQueue.length === 0) {
+		// TODO: Consider build of svelte-retag so we can drop console.logs() when publishing without having to comment out. See: https://github.com/vitejs/vite/discussions/7920
+		//console.debug(`renderElements(${timestamp}): returned, queue is now empty`);
+		return;
+	}
+
+	for(let element of renderQueue) {
+		// Element was queued but likely rearranged due to the parent rendering first (resulting in a new instance and this
+		// being forever orphaned).
+		if (!element.isConnected) {
+			//console.debug(`renderElements(${timestamp}): skipped, already disconnected:`, element);
+			continue;
+		}
+
+		// Quick double check: Skip any which have *light* DOM parents that are queued for render. See _queueForRender() for details.
+		if (element.parentElement.closest('[data-svelte-retag-render="light"]') === null) {
+			element.removeAttribute('data-svelte-retag-render');
+			element._renderSvelteComponent();
+		} else {
+			//console.debug(`renderElements(${timestamp}): skipped, light DOM parent is queued for render:`, element);
+		}
+	}
+}
+
 
 /**
  * Please see README.md for usage information.
@@ -38,6 +76,9 @@ export default function(opts) {
 	 * initial page loads). That CLS typically occurs because ESM modules are deferred (as noted above) but also because
 	 * it's difficult to know what the correct/final slot content will be until after the parser has rendered the DOM for
 	 * us.
+	 *
+	 * When performing shadow DOM rendering, it provides an un-styled container where we can attach the Svelte component
+	 * once it begins rendering.
 	 */
 	if (!window.customElements.get('svelte-retag')) {
 		window.customElements.define('svelte-retag', class extends HTMLElement {
@@ -52,14 +93,12 @@ export default function(opts) {
 		});
 	}
 
-	// Inspect the component early on to get its available properties (statically available).
-	const propInstance = new opts.component({ target: document.createElement('div') });
-	const propMap = new Map();
-	for(let key of Object.keys(propInstance.$$.props)) {
-		propMap.set(key.toLowerCase(), key);
-	}
-	propInstance.$destroy();
-
+	/**
+	 * Object containing keys pointing to slots: Either an actual <slot> element or a document fragment created to wrap
+	 * default slot content.
+	 *
+	 * @typedef {Object.<string, HTMLSlotElement|DocumentFragment>} SlotList
+	 */
 
 	/**
 	 * Defines the actual custom element responsible for rendering the provided Svelte component.
@@ -70,10 +109,12 @@ export default function(opts) {
 
 			this._debug('constructor()');
 
+
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
 				this.attachShadow({ mode: 'open' });
-				this._root = document.createElement('div');
+				// TODO: Better than <div>, but: Is a wrapper entirely necessary? Why not just set this._root = this.shadowRoot?
+				this._root = document.createElement('svelte-retag');
 				this.shadowRoot.appendChild(this._root);
 
 				// Link generated style. Do early as possible to ensure we start downloading CSS (reduces FOUC).
@@ -115,7 +156,7 @@ export default function(opts) {
 
 			// If compiled as IIFE/UMD and executed early, then the document is likely to be in the process of loading
 			// and thus actively parsing tags, including not only this tag but also nested content (which may not yet be
-			// available yet).
+			// available).
 			const isLoading = (document.readyState === 'loading');
 
 			// Setup the special <svelte-retag> wrapper if not already present (which can happen when
@@ -130,7 +171,7 @@ export default function(opts) {
 						this._onSlotsReady(() => {
 							this._initLightRoot();
 							this._hydrateLightSlots();
-							this._renderSvelteComponent();
+							this._queueForRender();
 						});
 						return;
 
@@ -162,7 +203,7 @@ export default function(opts) {
 			}
 
 			// Now that we're connected to the DOM, we can render the component now.
-			this._renderSvelteComponent();
+			this._queueForRender();
 
 			// If we want to enable the current component as hydratable, add the flag now that it has been fully
 			// rendered (now that slots have been located under the Svelte component). This attribute is important since
@@ -180,6 +221,10 @@ export default function(opts) {
 		disconnectedCallback() {
 			this._debug('disconnectedCallback()');
 
+			// Remove render flag (if present). This could happen in case the element is disconnected while waiting to render
+			// (particularly if slotted under a light DOM parent).
+			this.removeAttribute('data-svelte-retag-render');
+
 			// Remove hydration flag, if present. This component will be able to be rendered from scratch instead.
 			this.removeAttribute('data-svelte-retag-hydratable');
 
@@ -192,6 +237,7 @@ export default function(opts) {
 				try {
 					// Clean up: Destroy Svelte component when removed from DOM.
 					this.componentInstance.$destroy();
+					delete this.componentInstance;
 				} catch(err) {
 					console.error(`Error destroying Svelte component in '${this.tagName}'s disconnectedCallback(): ${err}`);
 				}
@@ -203,7 +249,8 @@ export default function(opts) {
 				// construct/connectedCallback on this one).
 				this._restoreLightSlots();
 
-				// Lastly, unwinding everything in reverse: Remove the special <svelte-tag> wrapper.
+				// Lastly, unwinding everything in reverse: Remove the "light" DOM root (the special <svelte-tag> wrapper) which
+				// is only added during connectedCallback(), unlike shadow DOM which is attached in construct.
 				this.removeChild(this._root);
 			}
 		}
@@ -265,8 +312,8 @@ export default function(opts) {
 		_translateAttribute(attributeName) {
 			// In the unlikely scenario that a browser somewhere doesn't do this for us (or maybe we're in a quirks mode or something...)
 			attributeName = attributeName.toLowerCase();
-			if (propMap.has(attributeName)) {
-				return propMap.get(attributeName);
+			if (this.propMap && this.propMap.has(attributeName)) {
+				return this.propMap.get(attributeName);
 			} else {
 				this._debug(`_translateAttribute(): ${attributeName} not found`);
 				return attributeName;
@@ -274,12 +321,72 @@ export default function(opts) {
 		}
 
 		/**
+		 * To support context, this traverses the DOM to find potential parent elements (also managed by svelte-retag) which
+		 * may contain context necessary to render this component.
+		 *
+		 * See context functions at: https://svelte.dev/docs/svelte#setcontext
+		 *
+		 * @returns {Map|null}
+		 */
+		_getAncestorContext() {
+			let node = this;
+			while(node.parentNode) {
+				node = node.parentNode;
+				let context = node?.componentInstance?.$$?.context;
+				if (context instanceof Map) {
+					return context;
+				}
+			}
+
+			return null;
+		}
+
+		/**
+		 * Queue this element for render in the next animation frame. This offers the opportunity to render known available
+		 * elements all at once and, ideally, from the top down (to preserve context).
+		 */
+		_queueForRender() {
+			// No point if already disconnected. Attempting to hit the parent element will trigger an error.
+			if (!this.isConnected) {
+				this._debug('queueForRender(): skipped, already disconnected');
+				return;
+			}
+
+			// Skip the queue if a parent is already queued for render, but for the light DOM only. This is because if it's in the
+			// light DOM slot, it will be disconnected and reconnected again (which will then also trigger a need to render).
+			if (this.parentElement.closest('[data-svelte-retag-render="light"]') !== null) {
+				this._debug('queueForRender(): skipped, light DOM parent is queued for render');
+				return;
+			}
+
+			// When queuing for render, it's also necessary to identify the DOM rendering type. This is necessary for child
+			// components which are *underneath* a parent that is using light DOM rendering (see above). This helps to ensure
+			// rendering is performed in the correct order (useful for things like context).
+			this.setAttribute('data-svelte-retag-render', opts.shadow ? 'shadow' : 'light');
+			requestAnimationFrame(renderElements);
+		}
+
+		/**
 		 * Renders (or rerenders) the Svelte component into this custom element based on the latest properties and slots
 		 * (with slots initialized elsewhere).
 		 *
-		 * NOTE: Despite the intuitive name, this method is private since its functionality requires a deeper understanding
+		 * IMPORTANT:
+		 *
+		 * Despite the intuitive name, this method is private since its functionality requires a deeper understanding
 		 * of how it depends on current internal state and how it alters internal state. Be sure to study how it's called
-		 * before calling it yourself externally. 🔥🐉
+		 * before calling it yourself externally. ("Yarrr! Here be dragons! 🔥🐉")
+		 *
+		 * That said... this is currently the workflow:
+		 *
+		 * 1. Wait for connection to DOM
+		 * 2. Ensure slots are properly prepared (e.g. in case of hydration) or observed (in case actively parsing DOM, e.g.
+		 *    IIFE/UMD or shadow DOM) in case there are any changes *after* this render
+		 * 3. _queueForRender(): Kick off to requestAnimationFrame() to queue render of the component (instead of rendering
+		 *    immediately) to ensure that all currently connected and available components are taken into account (this is
+		 *    necessary for properly supporting context to prevent from initializing components out of order).
+		 * 4. renderElements(): Renders through the DOM tree in document order and from the top down (parent to child),
+		 *    reaching this element instantiating this component, ensuring context is preserved.
+		 *
 		 */
 		_renderSvelteComponent() {
 			this._debug('renderSvelteComponent()');
@@ -295,26 +402,67 @@ export default function(opts) {
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
 			this._root.innerHTML = '';
 
-			// Props passed to Svelte component constructor.
+			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
+			const context = this._getAncestorContext() || new Map();
+
+			// Props always passed to Svelte component constructor.
 			let props = {
 				$$scope: {},
 
 				// Convert our list of slots into Svelte-specific slot objects
 				$$slots: createSvelteSlots(this.slotEls),
 
-				// All other props are pulled from element attributes (see below)...
+				// All other *initial* props are pulled dynamically from element attributes (see proxy below)...
 			};
 
-			// Populate custom element attributes into the props object.
-			for(let attr of [...this.attributes]) {
-				// Note: Skip svelte-retag specific attributes (used for hydration purposes).
-				if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
-				props[this._translateAttribute(attr.name)] = attr.value;
+			// Conveying props while translating them FROM a case-insensitive form like attributes (which are forced
+			// case-insensitive) TO a case-sensitive form (which is required by the component) can be very tricky. This is
+			// because we really cannot know the correct case until AFTER the component is instantiated. Therefore, a proxy is
+			// a great way to infer the correct case, since by design, all components attempt to access ALL their props when
+			// instantiated. Once accessed the first time for a particular tag, we no longer need to proxy since we know for
+			// certain that the same tag will be used for any particular component (whose props will not change).
+			if (!propMapCache.has(this.tagName)) {
+				// Initialize mapping of props for this tag for use later. This way, we can avoid proxying on every single
+				// component render/instantiation but also for attributeChangedCallback().
+				this.propMap = new Map();
+				propMapCache.set(this.tagName, this.propMap);
+
+				props = new Proxy(props, {
+					get: (target, prop) => {
+						// Warm cache with prop translations from forced lowercase to their real case.
+						let propName = prop.toString();
+						if (prop.indexOf('$$') === -1) {
+							this.propMap.set(propName.toLowerCase(), propName);
+						}
+
+						// While here, see if this attempted access matches an element attribute. Note, this lookup is
+						// already case-insensitive, see: https://dom.spec.whatwg.org/#namednodemap
+						let attribValue = this.attributes.getNamedItem(propName);
+						if (attribValue !== null) {
+							return attribValue.value;
+						} else {
+							// Fail over to what would have otherwise been returned.
+							return target[prop];
+						}
+					},
+				});
+
+			} else {
+				// Skip the proxying of props and just recycle the cached mapping to populate custom element attributes into the
+				// props object with the correct case.
+				this.propMap = propMapCache.get(this.tagName);
+				for(let attr of [...this.attributes]) {
+					// Note: Skip svelte-retag specific attributes (used for hydration purposes).
+					if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
+					props[this._translateAttribute(attr.name)] = attr.value;
+				}
 			}
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
-			this.componentInstance = new opts.component({ target: this._root, props: props });
+			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+
+			this._debug('renderSvelteComponent(): completed');
 		}
 
 		/**
@@ -364,6 +512,8 @@ export default function(opts) {
 		 * Returns a map of slot names and the corresponding HTMLElement (named slots) or DocumentFragment (default slots).
 		 *
 		 * IMPORTANT: Since this custom element is the "root", these slots must be removed (which is done in THIS method).
+		 *
+		 * TODO: Problematic name. We are "getting" but we're also mangling/mutating state (which *is* necessary). "Get" may be confusing here; is there a better name?
 		 *
 		 * @returns {SlotList}
 		 */
@@ -532,7 +682,7 @@ export default function(opts) {
 		/**
 		 * Watches for slot changes, specifically:
 		 *
-		 * 1. Shadow DOM: All slot changes will trigger a rerender of the Svelte component
+		 * 1. Shadow DOM: All slot changes will queue a rerender of the Svelte component
 		 *
 		 * 2. Light DOM: Only additions will be accounted for. This is particularly because currently we only support
 		 *    watching for changes during document parsing (i.e. document.readyState === 'loading', prior to the
@@ -574,8 +724,8 @@ export default function(opts) {
 				}
 
 				// Force a rerender now.
-				this._debug('_processMutations(): Trigger rerender');
-				this._renderSvelteComponent();
+				this._debug('_processMutations(): Queue rerender');
+				this._queueForRender();
 			}
 		}
 
@@ -588,7 +738,7 @@ export default function(opts) {
 		_debug() {
 			if (opts.debugMode) {
 				if (opts.debugMode === 'cli') {
-					console.log.apply(null, [...arguments]);
+					console.log.apply(null, [this.tagName, ...arguments]);
 				} else {
 					console.log.apply(null, [this, ...arguments]);
 				}

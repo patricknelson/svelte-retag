@@ -17,7 +17,7 @@
 
 	<div id="app">
 
-		<!-- Go ahead and edit this title. Changes will be forwarded automatically. -->
+		<!-- Go ahead and edit this "pagetitle"! Changes will be forwarded to the "pageTitle" prop automatically. -->
 		<app-tag pagetitle="IIFE/UMD" page="iife">
 
 			<intro-tag>
@@ -25,25 +25,64 @@
 				<p>While this reduces cumulative layout shift (CLS), it is not conducive to code splitting and may generate a large bundle (thus taking longer to download and initialize).</p>
 			</intro-tag>
 
-			<example-tag>
-				<p slot="title">Default: Count starts at 0, award at 100.</p>
-				<counter-tag slot="content"></counter-tag>
-			</example-tag>
+			<!-- Top level context (starts at tabs-wrapper) -->
+			<tabs-wrapper>
+				<tab-list>
+					<tab-button>Features</tab-button>
+					<tab-button>Examples</tab-button>
+				</tab-list>
 
-			<example-tag>
-				<p slot="title">Start out just 1 click away from the "award".</p>
-				<counter-tag slot="content" count="99"></counter-tag>
-			</example-tag>
+				<!-- Features -->
+				<tab-panel>
+					<features-info></features-info>
+				</tab-panel>
 
-			<example-tag>
-				<p slot="title">1337 award</p>
-				<counter-tag slot="content" count="1337" award="1337"></counter-tag>
-			</example-tag>
 
-			<example-tag>
-				<p slot="title">Nested slot: "Total is"</p>
-				<counter-tag slot="content">Total is</counter-tag>
-			</example-tag>
+				<!-- Examples -->
+				<tab-panel>
+
+					<!-- Nested context -->
+					<tabs-wrapper>
+
+						<tab-list>
+							<tab-button>Slots and Attributes</tab-button>
+							<tab-button>Nested Context Support</tab-button>
+						</tab-list>
+
+						<!-- Slots and Attributes -->
+						<tab-panel>
+							<examples-info></examples-info>
+
+							<example-tag>
+								<p slot="title">Default: <code>count</code> starts at 0, <code>award</code> at 100.</p>
+								<counter-tag slot="content"></counter-tag>
+							</example-tag>
+
+							<example-tag>
+								<p slot="title">Start out just 1 click away from the <code>award</code>.</p>
+								<counter-tag slot="content" count="99"></counter-tag>
+							</example-tag>
+
+							<example-tag>
+								<p slot="title">1337 <code>award</code></p>
+								<counter-tag slot="content" count="1337" award="1337"></counter-tag>
+							</example-tag>
+
+							<example-tag>
+								<p slot="title">Slot: "Total is"</p>
+								<counter-tag slot="content">Total is</counter-tag>
+							</example-tag>
+						</tab-panel>
+
+						<!-- Nested Context Support -->
+						<tab-panel>
+							<tabs-info></tabs-info>
+						</tab-panel>
+					</tabs-wrapper>
+
+				</tab-panel>
+
+			</tabs-wrapper>
 
 		</app-tag>
 

@@ -23,6 +23,7 @@
 	];
 </script>
 
+
 <main>
 	<div>
 		<a href="https://github.com/patricknelson/svelte-retag/" target="_blank" rel="noreferrer">
@@ -43,8 +44,11 @@
 		<h1>{pageTitle}</h1>
 	{/if}
 
+	<!-- Entirety of remaining page content in the slot below -->
 	<slot/>
+
 </main>
+
 
 <style>
 	div {
@@ -82,7 +86,15 @@
 	}
 
 	a.current {
-		color: #ff3e00;
+		color: var(--orange);
 		text-decoration: underline;
 	}
+
+
+	@media (min-width: 970px) {
+		main {
+			width: 900px;
+		}
+	}
+
 </style>
