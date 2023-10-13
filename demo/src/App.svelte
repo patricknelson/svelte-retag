@@ -27,7 +27,7 @@
 <main>
 	<div>
 		<a href="https://github.com/patricknelson/svelte-retag/" target="_blank" rel="noreferrer">
-			<img src={retagLogo} class="logo" alt="svelte-retag logo (link to GitHub repo)"/> </a>
+			<img src={retagLogo} class="logo" alt="svelte-retag logo (link to GitHub repo)" width="403" height="96" /> </a>
 	</div>
 
 	<!-- Simple navigation between demos -->
@@ -56,7 +56,6 @@
 	}
 
 	.logo {
-		height: 6em;
 		will-change: filter;
 		transition: filter 300ms;
 	}
