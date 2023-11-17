@@ -7,7 +7,7 @@
 
 	import svelteLogo from '../assets/svelte.svg';
 
-	export let count;
+	export let count = 0;
 	export let award = 100;
 
 	// Since we're taking input ultimately from web components, we know it's likely to be in string form, so always cast

@@ -439,8 +439,19 @@ export default function(opts) {
 						// already case-insensitive, see: https://dom.spec.whatwg.org/#namednodemap
 						let attribValue = this.attributes.getNamedItem(propName);
 						if (attribValue !== null) {
-							return attribValue.value;
+							// Before returning, ensure the prop is at least initialized on the target. This ensures that Vite HMR
+							// will be aware that the prop exists when creating the proxied component (since it enumerates all props).
+							// This prevents it from resetting back to the props default state during HMR reloads (the same as how it
+							// works if the component were to have been defined inside of another Svelte component instead of as a
+							// custom element here).
+							return target[propName] = attribValue.value;
 						} else {
+							// IMPORTANT: Unlike above, we SHOULD NOT be initializing target[propName] here, even though it could offer benefits
+							// (like allowing the latest *evolved* prop value to be persisted after HMR updates). The reason is that
+							// Svelte itself will *also* reset the prop to its default value after HMR updates *unless* the parent Svelte
+							// component explicitly sets the prop. If we set it here, we would diverge from how Svelte handles undefined
+							// props during HMR reloads.
+
 							// Fail over to what would have otherwise been returned.
 							return target[prop];
 						}
