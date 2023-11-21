@@ -141,16 +141,17 @@ with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
 ## Change Log
 
-- [x] Migrate to Vitest for unit testing (see https://github.com/crisward/svelte-tag/pull/14)
-- [x] Update logo
-- [x] Fix nested slot support (https://github.com/patricknelson/svelte-retag/pull/5)
-- [x] Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
+- Migrate to Vitest for unit testing (see https://github.com/crisward/svelte-tag/pull/14)
+- Update logo
+- Fix nested slot support (https://github.com/patricknelson/svelte-retag/pull/5)
+- Better support for slots during early execution of IIFE compiled packages, i.e. use `MutationObserver` to watch
 	for light DOM slots during initial parsing (see https://github.com/patricknelson/svelte-retag/issues/7)
-- [x] Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
-- [x] Svelte 4 support (tested)
-- [x] Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR
+- Support Lit-style lowercase props (see https://github.com/patricknelson/svelte-retag/pull/9)
+- Svelte 4 support (tested)
+- Support context (see https://github.com/patricknelson/svelte-retag/issues/10, PR
 	at https://github.com/patricknelson/svelte-retag/pull/18)
-- [x] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
+- Add demos to vercel site (see https://github.com/patricknelson/svelte-retag/issues/11)
+- Add step-by-step instructions and provided a simple MVP example (https://github.com/patricknelson/svelte-retag/pull/24)
 
 ### Milestones:
 

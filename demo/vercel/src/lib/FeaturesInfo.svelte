@@ -1,5 +1,5 @@
 <p>View the
-	<a href="https://github.com/patricknelson/svelte-retag/blob/main/demo/index.html" target="_blank" rel="noopener">page
+	<a href="https://github.com/patricknelson/svelte-retag/blob/main/demo/vercel/index.html" target="_blank" rel="noopener">page
 		source 🚀</a>. This demo is implemented entirely using via <code>svelte-retag</code> with all Svelte components
 	organized on the page using custom elements (or &ldquo;web components&rdquo;). Featuring:</p>
 <ul>
