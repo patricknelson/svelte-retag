@@ -43,7 +43,7 @@ Svelte already allows you to compile your components to custom elements. However
 npm install svelte-retag
 ```
 
-Check out the [Hello World tutorial](https://github.com/patricknelson/svelte-retag/tree/main/demo/hello-world) to see it
+Check out the [Hello World demo](https://github.com/patricknelson/svelte-retag/tree/main/demo/hello-world) to see it
 in action yourself and for instructions on how to get started from scratch.
 
 ### <a id="backend-integration" />Backend Integration
@@ -102,6 +102,8 @@ on your component would be automatically made available as `greetperson` on your
 ```html
 <hello-world greetperson="Cris"></hello-world>
 ```
+
+For more info on getting started, take a look at the [Hello World demo](https://github.com/patricknelson/svelte-retag/tree/main/demo/hello-world).
 
 ### Options
 
