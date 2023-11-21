@@ -31,9 +31,10 @@ DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Sve
 Svelte already allows you to compile your components to custom elements. However, it has a couple of flaws:
 
 * Svelte 3: You have to use shadow DOM (no light DOM compatibility at all)
-* Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which means no nesting
+* Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which also means no
+  nesting of your web components
 * No context support (https://github.com/sveltejs/svelte/issues/8987)
-* Vite HMR doesn't work with custom elements (see comments of https://github.com/sveltejs/svelte/issues/8681)
+* Vite HMR doesn't work with custom elements (see comments of https://github.com/sveltejs/svelte/issues/8681 and issue https://github.com/sveltejs/svelte-hmr/issues/26)
 
 ## How do I use it?
 
