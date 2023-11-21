@@ -1,5 +1,5 @@
 <script>
-	import retagLogo from '../../logo/svelte-retag.svg';
+	import retagLogo from '../../../logo/svelte-retag.svg';
 
 	export let pageTitle = 'Demo';
 	export let page = '';

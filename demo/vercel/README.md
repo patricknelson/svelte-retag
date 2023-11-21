@@ -11,5 +11,5 @@ Composed purely of Svelte custom elements in the light DOM, demonstrates:
 
 **See:**
 
-* https://github.com/patricknelson/svelte-retag/blob/main/demo/src/main.js
-* https://github.com/patricknelson/svelte-retag/blob/main/demo/index.html
+* https://github.com/patricknelson/svelte-retag/blob/main/demo/vercel/src/main.js
+* https://github.com/patricknelson/svelte-retag/blob/main/demo/vercel/index.html
