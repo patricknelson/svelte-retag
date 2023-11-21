@@ -9,19 +9,20 @@ DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Sve
 
 **Demo:** https://svelte-retag.vercel.app/
 
-## Core features
+## Core Features
 
 * 🌟 **Light DOM:** Allows you to render your Svelte components as custom elements in the light DOM as usual.
-* 🎰 **Slots:** Supports default and named slots in the _light DOM_ (supports nesting).
+* 🎰 **Slots & Nesting:** Supports default and named slots in the _light DOM_ (with nesting).
 * 🧭 **Context:** Use `setContext()` and `getContext()` and just compose your components as custom elements as you
 	normally would ([see live tab demo](https://svelte-retag.vercel.app/)). Supports nesting.
 * ⚡ **Vite HMR:** Unlike Svelte, these custom elements are also compatible with Vite's HMR. It avoids the
 	infamous `Failed to execute 'define' on 'CustomElementRegistry'` errors.
 * 🏃‍♂️ **IIFE/UMD:** Supports building to `iife` and `umd` for eager rendering to the light DOM, as soon as the
 	parser encounters the custom element. Reduces CLS (Cumulative Layout Shift), making it interactive more quickly
-  _without_ waiting for `defer`'d scripts (such as modules).
-* ⚙ **Composability:** `svelte-retag` gives you the flexility to use your component as you normally would within Svelte
-	_and_ as a custom element outside of Svelte (supporting both `<ExampleComponent />` and `<example-component>`).
+	_without_ waiting for `defer`'d scripts (such as modules).
+* ⚙ **Composability:** `svelte-retag` gives you the flexibility to use your component as you normally would within
+  Svelte _and_ as a custom element outside of Svelte (supporting both `<ExampleComponent />` and `<example-component>`).
+  For details on how to use with PHP, Python, Ruby, etc., see [Backend Integration](#backend-integration) below.
 * 💼 **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
 	regardless of the stack (great for upgrading legacy applications).
 
@@ -29,32 +30,72 @@ DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Sve
 
 Svelte already allows you to compile your components to custom elements. However, it has a couple of flaws:
 
-* All of your nested components have to be implemented as custom elements, since the render flag applies to everything.
-* You have to use shadow DOM (Svelte 3, or Svelte 4 if you still want to use slots).
-* You have to deal with lots of bugs.
-* You loose many features Svelte has for inter-component communication.
+* Svelte 3: You have to use shadow DOM (no light DOM compatibility at all)
+* Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which means no nesting
+* No context support (https://github.com/sveltejs/svelte/issues/8987)
+* Vite HMR doesn't work with custom elements (see comments of https://github.com/sveltejs/svelte/issues/8681)
 
 ## How do I use it?
 
-### Installation
+### Installation & Quick Start
 
 ```bash
 npm install svelte-retag
 ```
 
-### Demo code
+If you're **starting from scratch**, create a new [Vite](https://vitejs.dev/) project like so:
+
+1. `npm create vite@latest` and select `Svelte` as your framework and `JavaScript` as your variant (or `TypeScript` if
+	you prefer). Don't select `SvelteKit` if you're already running another backend (e.g. PHP or Python, [see below](#backend-integration)).
+2. `cd` into your new project
+3. Run `npm install svelte-retag`
+4. Run `npm run dev` to start the Vite development server and open http://localhost:5173/ in your browser
+5. Create your Svelte components and define your custom elements (web components) using `svelteRetag()` in `src/main.js` as described below, e.g.
+
+    ```javascript
+    import svelteRetag from 'svelte-retag';
+    import HelloWorld from './HelloWorld.svelte';
+
+    svelteRetag({
+    	component: HelloWorld,
+    	tagname: 'hello-world',
+    });
+    ```
+6. In `index.html`, remove `<div id="app"></div>` and instead add your custom elements to your `index.html` (e.g.
+   `<hello-world greetperson="👩‍🚀"></hello-world>`).
+
+**Note:** No modifications are required to your `vite.config.js` or `svelte.config.js` files. Keep in mind that the
+`customElement` compiler option _does not_ need to be enabled since we are replacing that functionality entirely
+with `svelte-retag`.
+
+### <a id="backend-integration" />Backend Integration
+
+If you're running a non-JavaScript backend such as PHP, Python, Ruby, etc. and would still like to use Vite (but cannot
+rely solely on Vite for local development), see [Vite's Backend Integration documentation](https://vitejs.dev/guide/backend-integration.html).
+This will guide you on how to run both your specific backend _and_ Vite's development server simultaneously.
+
+#### Svelte vs. SvelteKit
+
+Note that if you already have an existing backend, it is recommended that you just install `svelte` and not
+`@sveltejs/kit` since the extra metaframework features of SvelteKit (such as routing) may not be necessary. SvelteKit is
+now installed by default in the official documentation, so the extra complexity may be confusing when you are already
+running a backend and just using `svelte-retag` to add web components into an existing site.
+
+### Demo Code
+
+Add the following to your main entrypoint. If you are using Vite, this would likely be `src/main.js`.
 
 ```javascript
 import svelteRetag from 'svelte-retag';
-import HelloWorld from 'hello-world.svelte';
+import HelloWorld from './HelloWorld.svelte';
 
 svelteRetag({
 	component: HelloWorld,
 	tagname: 'hello-world',
 
 	// Optional:
-	attributes: ['greetperson'],
-	shadow: false,
+	attributes: ['greetperson'], // Changes to these attributes will be reactively forwarded to your component
+	shadow: false, // Use the light DOM
 	href: '/your/stylesheet.css', // Only necessary if shadow is true
 
 	// Experimental:
@@ -62,11 +103,21 @@ svelteRetag({
 });
 ```
 
+And in the `HelloWorld.svelte` Svelte component:
+
+```svelte
+<script>
+	export let greetPerson = 'World';
+</script>
+
+<h1>Hello {greetPerson}!</h1>
+```
+
 Now anywhere you use the `<hello-world>` tag, you'll get a Svelte component. Note that you must set your tag
 name
 to [anything containing a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements).
 
-To align with future versions of Svelte, attributes are automatically converted to lowercase (following
+To align with Svelte 4, **attributes** are automatically converted to lowercase (following
 the [Lit-style naming convention](https://lit.dev/docs/components/properties/#observed-attributes)). So, `greetPerson`
 on your component would be automatically made available as `greetperson` on your custom element.
 
@@ -76,21 +127,19 @@ on your component would be automatically made available as `greetperson` on your
 
 ### Options
 
-| Option     |   Default    | Description                                                                                                                                                                                                                                                                                                                                                                                                |
-|------------|:------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| component  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                                                                                                                                                                                                                                                  |
-| tagname    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                                                                                                                                                                                                                                          |
-| attributes |     `[]`     | array -  List of attributes to reactively forward to your component (does not reflect changes inside the component). <br> **Important:** Attributes must be the lowercase version of your Svelte component props ([similar to Lit](https://lit.dev/docs/components/properties/#observed-attributes)).                                                                                                      |
-| shadow     |   `false`    | boolean - Should this component use shadow DOM.<br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6.                                                                                                                                                                                                                        |
-| href       |     `''`     | link to your stylesheet - Allows you to ensure your styles are included in the shadow DOM (thus only required when `shadow` is set to `true`).                                                                                                                                                                                                                                                             |
-| hydratable |   `false`    | If enabled, allows for SSR/SSG of custom elements managed by `svelte-retag` by including extra markup so that they can be initialized (or "hydrated") client-side from pre-rendered HTML. Enable this during SSR/SSG to allow for proper initialization. See [hydration demo here](https://svelte-retag.vercel.app/hydratable.html). <br><br>Note: Experimental. Compatible with light DOM rendering only. |
+| Option       |   Default    | Description                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------------|:------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `component`  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                                                                                                                                                                                                                                                            |
+| `tagname`    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                                                                                                                                                                                                                                                    |
+| `attributes` |     `[]`     | Optional. List of attributes to reactively forward to your component (does not reflect changes inside the component). <br> **Important:** Attributes must be the lowercase version of your Svelte component props ([similar to Lit](https://lit.dev/docs/components/properties/#observed-attributes)).                                                                                                               |
+| `shadow`     |   `false`    | Optional. Indicates if this component should use shadow DOM.<br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6.                                                                                                                                                                                                                     |
+| `href`       |     `''`     | Optional. URL to your stylesheet. Allows you to ensure your styles are included in the shadow DOM. This option is only useful when `shadow` is set to `true`.                                                                                                                                                                                                                                                        |
+| `hydratable` |   `false`    | Optional. If enabled, allows for SSR/SSG of custom elements managed by `svelte-retag` by including extra markup so that they can be initialized (or "hydrated") client-side from pre-rendered HTML. Enable this during SSR/SSG to allow for proper initialization. See [hydration demo here](https://svelte-retag.vercel.app/hydratable.html). <br><br>Note: Experimental. Compatible with light DOM rendering only. |
 
 **Note:** For portability, `svelte-retag`'s API is fully backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
-## To Do
-
-On the immediate horizon:
+## Change Log
 
 - [x] Migrate to Vitest for unit testing (see https://github.com/crisward/svelte-tag/pull/14)
 - [x] Update logo
@@ -103,7 +152,7 @@ On the immediate horizon:
 	at https://github.com/patricknelson/svelte-retag/pull/18)
 - [x] Add demos (see https://github.com/patricknelson/svelte-retag/issues/11)
 
-Milestones:
+### Milestones:
 
 - **v1:** ✅
 - **v2:** Utilize Svelte 4's `customElement` syntax, i.e.
