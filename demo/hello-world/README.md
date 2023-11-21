@@ -26,15 +26,15 @@ For new projects, you can start with `svelte-retag` by creating a [Vite](https:/
 4. Run `npm run dev` to start the Vite development server and open http://localhost:5173/ in your browser
 5. Create your Svelte components and define your custom elements (web components) using `svelteRetag()` in `src/main.js` as described below, e.g.
 
-	  ```javascript
-		import svelteRetag from 'svelte-retag';
-		import HelloWorld from './HelloWorld.svelte';
+    ```javascript
+    import svelteRetag from 'svelte-retag';
+    import HelloWorld from './HelloWorld.svelte';
 
-		svelteRetag({
-			component: HelloWorld,
-			tagname: 'hello-world',
-		});
-		```
+    svelteRetag({
+    	component: HelloWorld,
+    	tagname: 'hello-world',
+    });
+    ```
 6. In `index.html`, remove `<div id="app"></div>` and instead add your custom elements to your `index.html` (e.g.
 	 `<hello-world greetperson="👩‍🚀"></hello-world>`).
 
