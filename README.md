@@ -34,7 +34,7 @@ Svelte already allows you to compile your components to custom elements. However
 * Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which also means no
   nesting of your web components
 * No context support (https://github.com/sveltejs/svelte/issues/8987)
-* Vite HMR doesn't work with custom elements (see comments of https://github.com/sveltejs/svelte/issues/8681 and issue https://github.com/sveltejs/svelte-hmr/issues/26)
+* Vite HMR doesn't work with custom elements (https://github.com/sveltejs/svelte/issues/8681 and https://github.com/sveltejs/svelte-hmr/issues/26)
 
 ## How do I use it?
 
