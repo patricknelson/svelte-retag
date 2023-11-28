@@ -4,7 +4,31 @@
  * level information, i.e. they do not call "this").
  */
 
-import { detach, insert, noop } from 'svelte/internal';
+
+/**
+ * Extracted from svelte's internal API @ src/runtime/internal/dom.js
+ *
+ * @param {Node} target
+ * @param {Node} node
+ * @param {Node} [anchor]
+ * @returns {void}
+ */
+function insert(target, node, anchor) {
+	target.insertBefore(node, anchor || null);
+}
+
+
+/**
+ * Extracted from svelte's internal API @ src/runtime/internal/dom.js
+ *
+ * @param {Node} node
+ * @returns {void}
+ */
+function detach(node) {
+	if (node.parentNode) {
+		node.parentNode.removeChild(node);
+	}
+}
 
 
 /**
@@ -22,7 +46,7 @@ export function createSvelteSlots(slots) {
 	function createSlotFn(element) {
 		return function() {
 			return {
-				c: noop,
+				c: function() {}, // noop
 				m: function mount(target, anchor) {
 					insert(target, element.cloneNode(true), anchor);
 				},
@@ -31,7 +55,7 @@ export function createSvelteSlots(slots) {
 						detach(element);
 					}
 				},
-				l: noop,
+				l: function() {}, // noop
 			};
 		};
 	}
