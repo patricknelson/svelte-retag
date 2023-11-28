@@ -1,5 +1,5 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
-
+import { mount } from 'svelte';
 
 // Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
 // global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
@@ -471,7 +471,7 @@ export default function(opts) {
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
-			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+			this.componentInstance = mount(opts.component, { target: this._root, props: props, context });
 
 			this._debug('renderSvelteComponent(): completed');
 		}
