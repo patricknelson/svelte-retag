@@ -28,8 +28,7 @@ DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Sve
 
 ## Why?
 
-Svelte already allows you to compile your components to custom elements. However, it's missing features that we want to
-add support for:
+Svelte already allows you to compile your components to custom elements. However, it's missing a few extra features:
 
 * Svelte 3: You have to use shadow DOM (no light DOM compatibility at all)
 * Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which also means no
