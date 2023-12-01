@@ -10,11 +10,12 @@
 			title: 'Module',
 			url: 'index.html',
 		},
-		{
+		// TODO: Commented out for now since this is experimental and putting it on display like this runs the risk of it being used accidentally or incorrectly.
+		/*{
 			alias: 'hydratable',
 			title: 'Module with Hydration',
 			url: (import.meta.env.DEV ? 'hydratable.source.html' : 'hydratable.html'),
-		},
+		},*/
 		{
 			alias: 'iife',
 			title: 'IIFE/UMD',
