@@ -21,8 +21,8 @@ DOM _or_ shadow DOM. Automatically forwards all slots and attributes to your Sve
 	parser encounters the custom element. Reduces CLS (Cumulative Layout Shift), making it interactive more quickly
 	_without_ waiting for `defer`'d scripts (such as modules).
 * ⚙ **Composability:** `svelte-retag` gives you the flexibility to use your component as you normally would within
-  Svelte _and_ as a custom element outside of Svelte (supporting both `<ExampleComponent />` and `<example-component>`).
-  For details on how to use with PHP, Python, Ruby, etc., see [Backend Integration](#backend-integration) below.
+	Svelte _and_ as a custom element outside of Svelte (supporting both `<ExampleComponent />` and `<example-component>`).
+	For details on how to use with PHP, Python, Ruby, etc., see [Backend Integration](#backend-integration) below.
 * 💼 **Portability:** Enables the freedom to utilize your Svelte components anywhere custom elements are supported,
 	regardless of the stack (great for upgrading legacy applications).
 
@@ -32,7 +32,7 @@ Svelte already allows you to compile your components to custom elements. However
 
 * Svelte 3: You have to use shadow DOM (no light DOM compatibility at all)
 * Svelte 4: You cannot use slots in the light DOM (https://github.com/sveltejs/svelte/issues/8963), which also means no
-  nesting of your web components
+	nesting of your web components
 * No context support (https://github.com/sveltejs/svelte/issues/8987)
 * Vite HMR doesn't work with custom elements (https://github.com/sveltejs/svelte/issues/8681 and https://github.com/sveltejs/svelte-hmr/issues/26)
 
@@ -160,10 +160,15 @@ with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
 
 ## Support & Contribution
 
-The API for this package is intentionally minimal. However, if you have any suggestions, feature
-requests or bugs at all, please be sure to [open an issue](https://github.com/patricknelson/svelte-retag/issues) first.
+**Features:** The API for this package is intentionally minimal and features that are outside of the scope of the core
+features listed above are not likely to be considered. However, for stability (and due to time constraints), new features
+will still be considered if they are small or will have little or no impact on _existing_ functionality.
 
-If you'd like to contribute, please feel free to open a PR, **however**: If possible, please attach it to an existing
+To report bugs or improvements, please [open an issue](https://github.com/patricknelson/svelte-retag/issues) and explain
+in as much detail as possible what the bug is and how to reproduce it. Please make sure that you only submit an
+issue if you have verified that it requires a change to `svelte-retag` itself.
+
+**PR's:** If you'd like to contribute, please feel free to open a PR, **however**: If possible, please attach it to an existing
 issue to ensure that discussion regarding your pull request isn't lost (in case it cannot be merged for whatever
 reason).
 
