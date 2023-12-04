@@ -1,13 +1,13 @@
 {
   "name": "svelte-retag",
-  "version": "1.3.7",
+  "version": "2.0.0-next.0",
   "description": "Light DOM custom element wrapper for Svelte 3 and 4 with slots, context and Vite HMR support",
   "main": "index.js",
   "scripts": {
     "test": "npm run eslint && vitest run",
     "vitest": "vitest run",
     "eslint": "eslint index.js tests/*",
-    "pub": "npm run test && npm run eslint && npm publish"
+    "pub": "npm run test && npm run eslint && npm publish --tag next"
   },
   "repository": {
     "type": "git",
