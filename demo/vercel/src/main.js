@@ -7,7 +7,7 @@ import Counter from './lib/Counter.svelte';
 import ExampleTag from './lib/ExampleTag.svelte';
 import { TabsWrapper, TabList, TabPanel, TabButton } from './lib/tabs';
 import TabsDemo from './lib/TabsDemo.svelte';
-import KeyFeatures from './lib/FeaturesInfo.svelte';
+import FeaturesInfo from './lib/FeaturesInfo.svelte';
 import ExamplesInfo from './lib/ExamplesInfo.svelte';
 import TabsInfo from './lib/TabsInfo.svelte';
 
@@ -49,7 +49,7 @@ svelteRetag({
 });
 
 svelteRetag({
-	component: KeyFeatures,
+	component: FeaturesInfo,
 	tagname: 'features-info',
 	debugMode,
 	hydratable,

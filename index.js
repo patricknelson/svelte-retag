@@ -64,7 +64,7 @@ function renderElements(timestamp) {
  *
  * @param {boolean|string?} opts.debugMode Hidden option to enable debugging for package development purposes.
  */
-export default function(opts) {
+export default function svelteRetag(opts) {
 	/**
 	 * Reserves our special <svelte-retag> custom element container which is used to wrap Svelte components.
 	 *
