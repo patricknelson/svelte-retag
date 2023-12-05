@@ -23,7 +23,6 @@ autoDefine(import.meta.glob('./**/*.svelte', { eager: true }), {
 }, () => {
 	// Extend with additional options, if desired.
 	return {
-		attributes: true,
 		debugMode,
 		hydratable,
 		shadow,
@@ -77,6 +76,11 @@ async function autoDefine(modules, {
 		svelteRetag({
 			component,
 			tagname,
+
+			// Default to true, since this is likely to vary on a per-component basis. You can override this in the callback.
+			attributes: true,
+
+			// Merge customized options.
 			...options,
 		});
 	}
