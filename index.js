@@ -516,12 +516,17 @@ export default function svelteRetag(opts) {
 			// Setup mutation observer to watch for changes to attributes on this element (if not already done) now that we
 			// know the full set of component props. Only do this if configured and if the observer hasn't already been setup
 			// (since we can render an element multiple times).
-			if (opts.attributes === true && !this.attributesObserved && this.propMap.size > 0) {
-				attributeObserver.observe(this, {
-					attributes: true,
-					attributeFilter: [...this.propMap.keys()],
-				});
+			if (opts.attributes === true && !this.attributesObserved) {
 				this.attributesObserved = true;
+				if (this.propMap.size > 0) {
+					attributeObserver.observe(this, {
+						attributes: true, // implicit, but... 🤷‍♂️
+						attributeFilter: [...this.propMap.keys()],
+					});
+				} else {
+					// No props to observe, so no point in setting up the observer.
+					this._debug('renderSvelteComponent(): skipped attribute observer, no props');
+				}
 			}
 
 
