@@ -75,7 +75,7 @@ svelteRetag({
 	tagname: 'hello-world',
 
 	// Optional:
-	attributes: ['greetperson'], // Changes to these attributes will be reactively forwarded to your component
+	attributes: true, // Forward all attributes to your component, or set to explicit list of attributes, e.g. ['greetperson'] or leave empty
 	shadow: false, // Use the light DOM
 	href: '/your/stylesheet.css', // Only necessary if shadow is true
 });
@@ -100,6 +100,7 @@ the [Lit-style naming convention](https://lit.dev/docs/components/properties/#ob
 on your component would be automatically made available as `greetperson` on your custom element.
 
 ```html
+
 <hello-world greetperson="Cris"></hello-world>
 ```
 
@@ -108,13 +109,13 @@ the [Hello World demo](https://github.com/patricknelson/svelte-retag/tree/main/d
 
 ### Options 🛠
 
-| Option       |   Default    | Description                                                                                                                                                                                                                                                                                                |
-|--------------|:------------:|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `component`  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                                                                                                                                                  |
-| `tagname`    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                                                                                                                                          |
-| `attributes` |     `[]`     | Optional. List of attributes to reactively forward to your component (does not reflect changes inside the component). <br><br> **Important:** Attributes must be the lowercase version of your Svelte component props ([similar to Lit](https://lit.dev/docs/components/properties/#observed-attributes)). |
-| `shadow`     |   `false`    | Optional. Indicates if this component should use shadow DOM. <br/><br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6.                                                                                                     |
-| `href`       |     `''`     | Optional. URL to your stylesheet. Allows you to ensure your styles are included in the shadow DOM. This option is only useful when `shadow` is set to `true`.                                                                                                                                              |
+| Option       |   Default    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|--------------|:------------:|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `component`  | _(required)_ | The constructor for your Svelte component (from `import`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `tagname`    | _(required)_ | The custom element tag name to use ([must contain a dash](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements))                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `attributes` |     `[]`     | `Array` (legacy): Explicit list of attributes to reactively forward to your component. Attributes must be the lowercase version of your Svelte component props ([similar to Lit](https://lit.dev/docs/components/properties/#observed-attributes)). <br><br> `Boolean` (recommended): If set to `true`, will automatically forward all attributes to your component props. If `false`, will not forward anything. <br><br> **Note:** In v2, this option will be removed and all attributes will be forwarded by default (for consistency with Svelte 4's custom elements). |
+| `shadow`     |   `false`    | Optional. Indicates if this component should use shadow DOM. <br/><br/> **Note:** Only basic support for shadow DOM is currently provided. See https://github.com/patricknelson/svelte-retag/issues/6.                                                                                                                                                                                                                                                                                                                                                                     |
+| `href`       |     `''`     | Optional. URL to your stylesheet. Allows you to ensure your styles are included in the shadow DOM. This option is only useful when `shadow` is set to `true`.                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 **Note:** For portability, `svelte-retag`'s API is fully backward compatible
 with [`svelte-tag@^1.0.0`](https://github.com/crisward/svelte-tag).
@@ -157,7 +158,6 @@ Changes since forking from [`svelte-tag`](https://github.com/crisward/svelte-tag
 See the **[milestones page](https://github.com/patricknelson/svelte-retag/milestones)** for changes planned in upcoming
 versions. Please be aware that until the version is officially released, the features slated for a particular version
 are subject to change!
-
 
 ## Support & Contribution
 

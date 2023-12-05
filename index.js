@@ -50,11 +50,11 @@ function renderElements(timestamp) {
  *
  * @param {object} opts Custom element options
  *
- * @param {any}       opts.component  Svelte component instance to incorporate into your custom element.
- * @param {string}    opts.tagname    Name of the custom element tag you'd like to define.
- * @param {string[]?} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified.
- * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
- * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
+ * @param {any}                        opts.component  Svelte component instance to incorporate into your custom element.
+ * @param {string}                     opts.tagname    Name of the custom element tag you'd like to define.
+ * @param {string[]|boolean|undefined} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
+ * @param {boolean?}                   opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
+ * @param {string?}                    opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
  * @param {boolean?}   opts.hydratable Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
@@ -133,7 +133,12 @@ export default function svelteRetag(opts) {
 		 * @returns string[]
 		 */
 		static get observedAttributes() {
-			return opts.attributes || [];
+			if (Array.isArray(opts.attributes)) {
+				// User defined an explicit list or nothing at all.
+				return opts.attributes;
+			} else {
+				return [];
+			}
 		}
 
 		/**
@@ -472,6 +477,12 @@ export default function svelteRetag(opts) {
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+
+			if (opts.attributes === true) {
+				// TODO: ISSUE-34: Check to see if this.propMap contains entries and, if so, setup the mutation observer ensuring
+				//  that 'attributefilter' is passed to .observe().
+			}
+
 
 			this._debug('renderSvelteComponent(): completed');
 		}
