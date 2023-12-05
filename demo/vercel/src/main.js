@@ -21,7 +21,7 @@ autoDefine(import.meta.glob('./**/*.svelte', { eager: true }), {
 	// In case we encounter components that are only a single word, we must have a prefix or suffix to add.
 	suffix: 'tag',
 }, () => {
-	// Extend with additional options, if desired.
+	// Extend with additional options on a per-tag basis, if desired. See usage below.
 	return {
 		debugMode,
 		hydratable,
