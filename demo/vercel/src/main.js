@@ -32,7 +32,7 @@ const shadowStylesheet = ''; // TODO: ISSUE-6: Find good solution for defining t
 svelteRetag({
 	component: App,
 	tagname: 'app-tag',
-	attributes: ['pagetitle'],
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -42,6 +42,7 @@ svelteRetag({
 svelteRetag({
 	component: Intro,
 	tagname: 'intro-tag',
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -51,6 +52,7 @@ svelteRetag({
 svelteRetag({
 	component: FeaturesInfo,
 	tagname: 'features-info',
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -60,6 +62,7 @@ svelteRetag({
 svelteRetag({
 	component: ExamplesInfo,
 	tagname: 'examples-info',
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -69,6 +72,7 @@ svelteRetag({
 svelteRetag({
 	component: TabsInfo,
 	tagname: 'tabs-info',
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -78,7 +82,7 @@ svelteRetag({
 svelteRetag({
 	component: Counter,
 	tagname: 'counter-tag',
-	attributes: ['count', 'award'],
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -88,6 +92,7 @@ svelteRetag({
 svelteRetag({
 	component: ExampleTag,
 	tagname: 'example-tag',
+	attributes: true,
 	debugMode,
 	hydratable,
 	shadow,
@@ -97,6 +102,7 @@ svelteRetag({
 svelteRetag({
 	component: TabPanel,
 	tagname: 'tab-panel',
+	attributes: true,
 	hydratable,
 	debugMode,
 	shadow,
@@ -107,6 +113,7 @@ svelteRetag({
 svelteRetag({
 	component: TabButton,
 	tagname: 'tab-button',
+	attributes: true,
 	hydratable,
 	debugMode,
 	shadow,
@@ -116,6 +123,7 @@ svelteRetag({
 svelteRetag({
 	component: TabsWrapper,
 	tagname: 'tabs-wrapper',
+	attributes: true,
 	hydratable,
 	debugMode,
 	shadow,
@@ -125,6 +133,7 @@ svelteRetag({
 svelteRetag({
 	component: TabList,
 	tagname: 'tab-list',
+	attributes: true,
 	hydratable,
 	debugMode,
 	shadow,
@@ -140,6 +149,7 @@ svelteRetag({
 svelteRetag({
 	component: TabsDemo,
 	tagname: 'tabs-demo',
+	attributes: true,
 	hydratable,
 	debugMode,
 	shadow,
