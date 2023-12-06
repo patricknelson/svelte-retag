@@ -1,0 +1,5 @@
+# To reduce maintenance for extremely basic demos, we're only pointing to the major versions and not including the
+# package-lock.json files (from the parent subdirectory). That way if you copy files and start your own project, the
+# lock file will be included in your first commit.
+
+hello-world/package-lock.json
