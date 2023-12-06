@@ -118,6 +118,34 @@ describe('Forwarding of attribute changes', () => {
 		await tick(); // required for svelte to apply update
 		expect(el.querySelector('.foo').innerHTML).toBe('changed 1');
 		expect(el.querySelector('.bar').innerHTML).toBe('changed 2');
+
+		/**
+		 * Below we are ensuring that MutationObserver is still following changes to attributes even if the element is
+		 * removed or relocated.
+		 */
+
+		// Remove customEl from parent and append to a new parent
+		customEl.remove();
+		el.innerHTML = '<div></div>';
+
+		// ... ensure that the parent is empty and that the element is fully disconnected from the DOM (but not garbage collected)
+		expect(customEl.parentElement).toBe(null);
+		expect(customEl.isConnected).toBe(false);
+		expect(el.querySelector('.foo')).toBe(null);
+		expect(el.querySelector('.bar')).toBe(null);
+
+		// ... prove that it was relocated in DOM by running last test again but ensuring original values.
+		el.appendChild(customEl);
+		expect(el.querySelector('.foo').innerHTML).toBe('changed 1');
+		expect(el.querySelector('.bar').innerHTML).toBe('changed 2');
+
+		// Change values again and verify once more than changes are reflected
+		customEl.setAttribute('foo', 'changed 3');
+		customEl.setAttribute('bar', 'changed 4');
+		await tick(); // required for svelte to apply update
+		expect(el.querySelector('.foo').innerHTML).toBe('changed 3');
+		expect(el.querySelector('.bar').innerHTML).toBe('changed 4');
+
 	});
 
 	test('boolean "attributes": forward all attributes if set to true (from default state)', async () => {

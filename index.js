@@ -13,7 +13,6 @@ const propMapCache = new Map();
 // NOTE: We can .observe() many separate elements and not have to .disconnect() each one individually, since if the
 // element being observed is removed from the DOM and released by the garbage collector, the MutationObserver will
 // stop observing the removed element automatically.
-// TODO: Validate that disconnected/reconnected elements are still being observed properly (e.g. if drag/dropped in the DOM via DevTools).
 const attributeObserver = new MutationObserver((mutations) => {
 	// Go through each mutation and forward the updated attribute value to the corresponding Svelte prop.
 	mutations.forEach(mutation => {
