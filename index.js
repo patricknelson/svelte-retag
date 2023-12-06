@@ -47,10 +47,9 @@ function renderElements(timestamp) {
 
 /**
  * Please see README.md for usage information.
- *
  * @param {object} opts Custom element options
  *
- * @param {any}       opts.component  Svelte component instance to incorporate into your custom element.
+ * @param {import('svelte').SvelteComponent<{}>}   opts.component  Svelte component instance to incorporate into your custom element.
  * @param {string}    opts.tagname    Name of the custom element tag you'd like to define.
  * @param {string[]?} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified.
  * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
