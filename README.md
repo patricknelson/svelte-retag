@@ -153,6 +153,7 @@ Changes since forking from [`svelte-tag`](https://github.com/crisward/svelte-tag
 - Add step-by-step instructions and provided a simple MVP
 	example (https://github.com/patricknelson/svelte-retag/pull/24)
 - Automatically forward all attributes to component (i.e. `attributes: true`) (https://github.com/patricknelson/svelte-retag/issues/34)
+- Add better TypeScript support (https://github.com/patricknelson/svelte-retag/pull/33)
 
 ### v2
 
