@@ -1,18 +1,22 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 
-// Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
-// global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
-// hits to attributeChangedCallback().
+/**
+ * Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
+ * global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
+ * hits to attributeChangedCallback().
+ */
 const propMapCache = new Map();
 
 
-// Mutation observer must be used to track changes to attributes on our custom elements, since we cannot know the
-// component props ahead of time (required if we were to use observedAttributes instead). In this case, only one
-// observer is necessary, since each call to .observe() can have a different "attributeFilter" specified.
-// NOTE: We can .observe() many separate elements and not have to .disconnect() each one individually, since if the
-// element being observed is removed from the DOM and released by the garbage collector, the MutationObserver will
-// stop observing the removed element automatically.
+/**
+ * Mutation observer must be used to track changes to attributes on our custom elements, since we cannot know the
+ * component props ahead of time (required if we were to use observedAttributes instead). In this case, only one
+ * observer is necessary, since each call to .observe() can have a different "attributeFilter" specified.
+ * NOTE: We can .observe() many separate elements and don't have to .disconnect() each one individually, since if the
+ * element being observed is removed from the DOM and released by the garbage collector, the MutationObserver will
+ * stop observing the removed element automatically.
+ */
 const attributeObserver = new MutationObserver((mutations) => {
 	// Go through each mutation and forward the updated attribute value to the corresponding Svelte prop.
 	mutations.forEach(mutation => {
