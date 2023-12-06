@@ -83,10 +83,10 @@ function renderElements(timestamp) {
  * @param {string}           [opts.href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
- * @param {boolean}  [opts.hydratable=false]   Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
- *                                     web component (e.g. SSR) by adding extra markers (attributes & wrappers) during
- *                                     rendering to enable svelte-retag to find and restore light DOM slots when
- *                                     restoring interactivity.
+ * @param {boolean}  [opts.hydratable=false] Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
+ *                                           web component (e.g. SSR) by adding extra markers (attributes & wrappers) during
+ *                                           rendering to enable svelte-retag to find and restore light DOM slots when
+ *                                           restoring interactivity.
  *
  * @param {boolean|string} [opts.debugMode=false] Hidden option to enable debugging for package development purposes.
  */
