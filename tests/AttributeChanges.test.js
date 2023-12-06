@@ -23,6 +23,8 @@ describe('Forwarding of attribute changes', () => {
 
 	test('default "attributes": no forwarding', async () => {
 
+		// TODO: ISSUE-36: Starting with v2, this test is expected to begin failing (default will be to forward all attributes)
+
 		svelteRetag({ component: AttributeChanges, tagname: 'attrib-changes-default', shadow: false });
 
 		el = document.createElement('div');
