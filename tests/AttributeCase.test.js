@@ -5,7 +5,7 @@ import { syncRaf } from './test-utils.js';
 
 let el = null;
 
-describe('Case: Test custom element attribute name case sensitivity', () => {
+describe('Test attribute name case sensitivity', () => {
 	beforeAll(() => {
 		svelteRetag({ component: AttributeCase, tagname: 'attrib-case', shadow: false });
 
