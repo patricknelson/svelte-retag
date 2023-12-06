@@ -2,7 +2,7 @@ import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vite
 
 import ContextParent from './ContextParent.svelte';
 import ContextChild from './ContextChild.svelte';
-import svelteRetag from '../index';
+import svelteRetag from '../index.js';
 import { syncRaf } from './test-utils.js';
 import { tick } from 'svelte';
 

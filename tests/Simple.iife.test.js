@@ -1,6 +1,6 @@
 import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Simple from './Simple.svelte';
-import svelteRetag from '../index';
+import svelteRetag from '../index.js';
 import { setReadyState, syncRaf } from './test-utils.js';
 import { tick } from 'svelte';
 

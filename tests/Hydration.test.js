@@ -1,6 +1,6 @@
 import { describe, beforeAll, afterAll, afterEach, test, expect, vi } from 'vitest';
 import Hydration from './Hydration.svelte';
-import svelteRetag from '../index';
+import svelteRetag from '../index.js';
 import { normalizeWhitespace, syncRaf } from './test-utils.js';
 
 let el = null;
