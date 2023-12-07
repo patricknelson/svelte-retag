@@ -5,14 +5,14 @@
 </script>
 
 {#if lowercase}
-	<div>lowercase: {lowercase}</div>
+	<div>lowercase: <span class="lower">{lowercase}</span></div>
 {/if}
 
 {#if camelCase}
-	<div>camelCase: {camelCase}</div>
+	<div>camelCase: <span class="camel">{camelCase}</span></div>
 {/if}
 
 {#if UPPERCASE}
-	<div>UPPERCASE: {UPPERCASE}</div>
+	<div>UPPERCASE: <span class="upper">{UPPERCASE}</span></div>
 {/if}
 

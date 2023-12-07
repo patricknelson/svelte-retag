@@ -1,10 +1,31 @@
 import { createSvelteSlots, findSlotParent, unwrap } from './utils.js';
 
 
-// Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
-// global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
-// hits to attributeChangedCallback().
+/**
+ * Tracks the mapping of case-insensitive attributes to case-sensitive component props on a per-tag basis. Setup as a
+ * global cache so we can avoid setting up a Proxy on every single component render but also to assist in mapping during
+ * hits to attributeChangedCallback().
+ */
 const propMapCache = new Map();
+
+
+/**
+ * Mutation observer must be used to track changes to attributes on our custom elements, since we cannot know the
+ * component props ahead of time (required if we were to use observedAttributes instead). In this case, only one
+ * observer is necessary, since each call to .observe() can have a different "attributeFilter" specified.
+ * NOTE: We can .observe() many separate elements and don't have to .disconnect() each one individually, since if the
+ * element being observed is removed from the DOM and released by the garbage collector, the MutationObserver will
+ * stop observing the removed element automatically.
+ */
+const attributeObserver = new MutationObserver((mutations) => {
+	// Go through each mutation and forward the updated attribute value to the corresponding Svelte prop.
+	mutations.forEach(mutation => {
+		const element = mutation.target;
+		const attributeName = mutation.attributeName;
+		const newValue = element.getAttribute(attributeName);
+		element.forwardAttributeToProp(attributeName, newValue);
+	});
+});
 
 
 /**
@@ -50,11 +71,11 @@ function renderElements(timestamp) {
  *
  * @param {object} opts Custom element options
  *
- * @param {any}       opts.component  Svelte component instance to incorporate into your custom element.
- * @param {string}    opts.tagname    Name of the custom element tag you'd like to define.
- * @param {string[]?} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified.
- * @param {boolean?}  opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
- * @param {string?}   opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
+ * @param {any}                        opts.component  Svelte component instance to incorporate into your custom element.
+ * @param {string}                     opts.tagname    Name of the custom element tag you'd like to define.
+ * @param {string[]|boolean|undefined} opts.attributes Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
+ * @param {boolean?}                   opts.shadow     Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
+ * @param {string?}                    opts.href       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
  * @param {boolean?}   opts.hydratable Light DOM slot hydration (specific to svelte-retag): Enables pre-rendering of the
@@ -109,6 +130,9 @@ export default function svelteRetag(opts) {
 
 			this._debug('constructor()');
 
+			// New instances, attributes not yet being observed.
+			this.attributesObserved = false;
+
 
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
@@ -130,10 +154,18 @@ export default function svelteRetag(opts) {
 		/**
 		 * Attributes we're watching for changes after render (doesn't affect attributes already present prior to render).
 		 *
+		 * NOTE: This only applies if opts.attributes is an array. If opts.attributes is true, then all attributes are
+		 * watched using the mutation observer instead.
+		 *
 		 * @returns string[]
 		 */
 		static get observedAttributes() {
-			return opts.attributes || [];
+			if (Array.isArray(opts.attributes)) {
+				// User defined an explicit list or nothing at all.
+				return opts.attributes;
+			} else {
+				return [];
+			}
 		}
 
 		/**
@@ -256,7 +288,7 @@ export default function svelteRetag(opts) {
 		}
 
 		/**
-		 * Forward modifications to element attributes to the corresponding Svelte prop.
+		 * Callback/hook for observedAttributes.
 		 *
 		 * @param {string} name
 		 * @param {string} oldValue
@@ -264,11 +296,22 @@ export default function svelteRetag(opts) {
 		 */
 		attributeChangedCallback(name, oldValue, newValue) {
 			this._debug('attributes changed', { name, oldValue, newValue });
+			this.forwardAttributeToProp(name, newValue);
+		}
+
+		/**
+		 * Forward modifications to element attributes to the corresponding Svelte prop (if applicable).
+		 *
+		 * @param {string} name
+		 * @param {string} value
+		 */
+		forwardAttributeToProp(name, value) {
+			this._debug('forwardAttributeToProp', { name, value });
 
 			// If instance already available, pass it through immediately.
-			if (this.componentInstance && newValue !== oldValue) {
+			if (this.componentInstance) {
 				let translatedName = this._translateAttribute(name);
-				this.componentInstance.$set({ [translatedName]: newValue });
+				this.componentInstance.$set({ [translatedName]: value });
 			}
 		}
 
@@ -472,6 +515,23 @@ export default function svelteRetag(opts) {
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
+
+			// Setup mutation observer to watch for changes to attributes on this element (if not already done) now that we
+			// know the full set of component props. Only do this if configured and if the observer hasn't already been setup
+			// (since we can render an element multiple times).
+			if (opts.attributes === true && !this.attributesObserved) {
+				this.attributesObserved = true;
+				if (this.propMap.size > 0) {
+					attributeObserver.observe(this, {
+						attributes: true, // implicit, but... 🤷‍♂️
+						attributeFilter: [...this.propMap.keys()],
+					});
+				} else {
+					// No props to observe, so no point in setting up the observer.
+					this._debug('renderSvelteComponent(): skipped attribute observer, no props');
+				}
+			}
+
 
 			this._debug('renderSvelteComponent(): completed');
 		}
