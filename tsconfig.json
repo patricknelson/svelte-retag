@@ -1,0 +1,24 @@
+{
+	// Only needed for JS files in the project root (exclude vite config).
+	"include": ["*.js"],
+	"exclude": ["vite.config.js"],
+
+	// See: https://www.typescriptlang.org/docs/handbook/declaration-files/dts-from-js.html
+	"compilerOptions": {
+		// Tells TypeScript to read JS files, as
+		// normally they are ignored as source files
+		"allowJs": true,
+		// Generate d.ts files
+		"declaration": true,
+		// This compiler run should
+		// only output d.ts files
+		"emitDeclarationOnly": true,
+		// Types should go into this directory.
+		// Removing this would place the .d.ts files
+		// next to the .js files
+		"outDir": "types",
+		// go to js file when using IDE functions like
+		// "Go to Definition" in VSCode
+		"declarationMap": true
+	}
+}
