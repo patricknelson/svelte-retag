@@ -72,23 +72,27 @@ function renderElements(timestamp) {
  */
 
 /**
- * Please see README.md for usage information.
+ * @typedef {object} SvelteRetagOptions Configuration options for svelte-retag. See README.md for details.
  *
- * @param {object} opts Custom element options
- *
- * @param {CmpConstructor}   opts.component       The Svelte component *class* constructor to incorporate into your custom element (this is the imported component class, *not* an instance)
- * @param {string}           opts.tagname         Name of the custom element tag you'd like to define.
- * @param {string[]|boolean} [opts.attributes=[]] Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
- * @param {boolean}          [opts.shadow=false]  Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
- * @param {string}           [opts.href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
+ * @property {CmpConstructor}   component       The Svelte component *class* constructor to incorporate into your custom element (this is the imported component class, *not* an instance)
+ * @property {string}           tagname         Name of the custom element tag you'd like to define.
+ * @property {string[]|boolean} [attributes=[]] Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
+ * @property {boolean}          [shadow=false]  Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
+ * @property {string}           [href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
- * @param {boolean} [opts.hydratable=false] EXPERIMENTAL.Light DOM slot hydration (specific to svelte-retag): Enables
- *                                          pre-rendering of the web component (e.g. SSR) by adding extra markers
- *                                          (attributes & wrappers) during rendering to enable svelte-retag to find and
- *                                          restore light DOM slots when restoring interactivity. See README.md for more.
+ * @property {boolean}          [hydratable=false] EXPERIMENTAL. Light DOM slot hydration (specific to svelte-retag): Enables
+ * 	                                               pre-rendering of the web component (e.g. SSR) by adding extra markers
+ * 	                                               (attributes & wrappers) during rendering to enable svelte-retag to find and
+ * 	                                               restore light DOM slots when restoring interactivity. See README.md for more.
+ * @property {boolean|'cli'}   [debugMode=false]  Hidden option to enable debugging for package development purposes.
  *
- * @param {boolean|string} [opts.debugMode=false] Hidden option to enable debugging for package development purposes.
+ */
+
+/**
+ * Please see README.md for usage information.
+ *
+ * @param {SvelteRetagOptions} opts Configuration options for svelte-retag. See README.md for details.
  */
 export default function svelteRetag(opts) {
 	/**
