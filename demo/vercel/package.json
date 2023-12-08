@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf dist/ && vite build && yarn build:iife",
-    "build:iife": "VITE_BUILD_FORMAT=iife yarn vite build && cp iife.html dist/",
+    "dev:iife": "build:iife --watch & alive-server --port=4173 --no-browser dist/",
+    "build": "rm -rf dist/ && vite build && yarn build:iife && cp iife.html dist/",
+    "build:iife": "VITE_BUILD_FORMAT=iife yarn vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.6",
+    "alive-server": "^1.3.0",
     "svelte": "^4.0.5",
     "vite": "^4.5.1"
   }
