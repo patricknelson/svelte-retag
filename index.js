@@ -818,9 +818,9 @@ export default function svelteRetag(opts) {
 		_debug() {
 			if (opts.debugMode) {
 				if (opts.debugMode === 'cli') {
-					console.log.apply(null, [this.tagName, ...arguments]);
+					console.log.apply(null, [performance.now(), this.tagName, ...arguments]);
 				} else {
-					console.log.apply(null, [this, ...arguments]);
+					console.log.apply(null, [performance.now(), this, ...arguments]);
 				}
 			}
 		}

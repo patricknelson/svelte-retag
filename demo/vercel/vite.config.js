@@ -17,6 +17,7 @@ export default defineConfig({
 	// See https://rollupjs.org/configuration-options/
 	build: {
 		emptyOutDir: false,
+		sourcemap: 'inline',
 
 		rollupOptions: {
 			// The 'iife' build format only allows for a single input (thus requiring separate build workflow and pointing directly to js).
