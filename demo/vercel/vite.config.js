@@ -28,7 +28,8 @@ export default defineConfig({
 
 			output: {
 				format: VITE_BUILD_FORMAT,
-				entryFileNames: 'assets/[name].[format].js',
+				entryFileNames: 'js/[name].[format].js', // required for iife (due to single input)
+				chunkFileNames: 'js/[name].[format].js', // required for esm (due to multiple inputs)
 				assetFileNames: 'assets/[name][extname]',
 			},
 		},

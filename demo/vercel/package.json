@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:iife": "build:iife --watch & alive-server --port=4173 --no-browser dist/",
+    "dev:iife": "yarn build:iife --watch & alive-server --port=4173 ----watch=dist/js/ --no-browser dist/",
     "build": "rm -rf dist/ && vite build && yarn build:iife && cp iife.html dist/",
-    "build:iife": "VITE_BUILD_FORMAT=iife yarn vite build",
+    "build:iife": "VITE_BUILD_FORMAT=iife vite build",
     "preview": "vite preview"
   },
   "devDependencies": {

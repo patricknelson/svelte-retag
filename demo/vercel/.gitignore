@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Ignoring package-lock.json since in this demo, we're standardizing on yarn only.
+package-lock.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
