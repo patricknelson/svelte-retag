@@ -7,6 +7,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Ignore all package manager lock files
+package-lock.json
+yarn.lock
+
 node_modules
 dist
 dist-ssr

@@ -7,7 +7,7 @@ import './app.css';
  * Query string control for testing.
  */
 const params = new URLSearchParams(location.search);
-const debugMode = !!params.get('debug');
+const debugMode = params.get('debug');
 const hydratable = !!params.get('hydratable');
 const shadow = !!params.get('shadow');
 const shadowStylesheet = ''; // TODO: ISSUE-6: Find good solution for defining this. For now, hack is to inject style[data-vite-dev-id] into shadowRoot.

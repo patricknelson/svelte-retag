@@ -17,6 +17,7 @@ export default defineConfig({
 	// See https://rollupjs.org/configuration-options/
 	build: {
 		emptyOutDir: false,
+		sourcemap: 'inline',
 
 		rollupOptions: {
 			// The 'iife' build format only allows for a single input (thus requiring separate build workflow and pointing directly to js).
@@ -28,7 +29,8 @@ export default defineConfig({
 
 			output: {
 				format: VITE_BUILD_FORMAT,
-				entryFileNames: 'assets/[name].[format].js',
+				entryFileNames: 'js/[name].[format].js', // required for iife (due to single input)
+				chunkFileNames: 'js/[name].[format].js', // required for esm (due to multiple inputs)
 				assetFileNames: 'assets/[name][extname]',
 			},
 		},
