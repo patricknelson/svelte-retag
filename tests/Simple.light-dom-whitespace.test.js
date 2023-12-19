@@ -24,20 +24,24 @@ describe('<simple-tag> (Light DOM)', () => {
 		window.requestAnimationFrame.mockRestore();
 	});
 
-	const unmodifiedOutput = '<simple-tag><svelte-retag>Initial 1 Initial Initial 2<!--<Simple>--></svelte-retag></simple-tag>';
+	const unmodifiedWrapperHTML = '<div>Initial 1 Initial Initial 2</div>';
+	function getWrapperHtml() {
+		return el.querySelector('div').outerHTML;
+	}
 
 	test('whitespace is ignored in unnamed default slot (single space)', async () => {
 		el = document.createElement('div');
 		el.innerHTML = '<simple-tag> </simple-tag>';
 		document.body.appendChild(el);
-		expect(el.innerHTML).toBe(unmodifiedOutput);
+
+		expect(getWrapperHtml()).toBe(unmodifiedWrapperHTML);
 	});
 
 	test('whitespace is ignored in unnamed default slot (mixed space 1)', async () => {
 		el = document.createElement('div');
 		el.innerHTML = '<simple-tag>\t \n \r</simple-tag>';
 		document.body.appendChild(el);
-		expect(el.innerHTML).toBe(unmodifiedOutput);
+		expect(getWrapperHtml()).toBe(unmodifiedWrapperHTML);
 	});
 
 	test('whitespace is ignored in unnamed default slot (mixed space 2)', async () => {
@@ -49,14 +53,14 @@ describe('<simple-tag> (Light DOM)', () => {
 			</simple-tag>
 `;
 		document.body.appendChild(el);
-		expect(el.innerHTML.trim()).toBe(unmodifiedOutput);
+		expect(getWrapperHtml()).toBe(unmodifiedWrapperHTML);
 	});
 
 	test('comments ignored in unnamed default slot', async () => {
 		el = document.createElement('div');
 		el.innerHTML = '<simple-tag><!-- comment --></simple-tag>';
 		document.body.appendChild(el);
-		expect(el.innerHTML).toBe(unmodifiedOutput);
+		expect(getWrapperHtml()).toBe(unmodifiedWrapperHTML);
 	});
 
 	test('comments mixed with whitespace ignored in unnamed default slot', async () => {
@@ -67,7 +71,7 @@ describe('<simple-tag> (Light DOM)', () => {
 			</simple-tag>
 `;
 		document.body.appendChild(el);
-		expect(el.innerHTML.trim()).toBe(unmodifiedOutput);
+		expect(getWrapperHtml()).toBe(unmodifiedWrapperHTML);
 	});
 
 	test('text nodes surrounding comments still gets slotted in unnamed default slot', async () => {
@@ -78,7 +82,7 @@ describe('<simple-tag> (Light DOM)', () => {
 			</simple-tag>
 `;
 		document.body.appendChild(el);
-		expect(normalizeWhitespace(el.innerHTML)).toBe('<simple-tag><svelte-retag>Initial 1 a <!-- comment --> b Initial 2<!--<Simple>--></svelte-retag></simple-tag>');
+		expect(normalizeWhitespace(getWrapperHtml())).toBe('<div>Initial 1 a <!-- comment --> b Initial 2</div>');
 	});
 
 });
