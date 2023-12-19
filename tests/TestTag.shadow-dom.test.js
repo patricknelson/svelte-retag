@@ -22,20 +22,23 @@ describe('<test-tag> (Shadow DOM)', () => {
 		window.requestAnimationFrame.mockRestore();
 	});
 
+	function getShadowHTML() {
+		// fetch the inner HTML from the <main> wrapper tag inside the shadow DOM
+		return el.querySelector('test-shad').shadowRoot.querySelector('main').innerHTML;
+	}
+
 	test('without slots', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad></test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></svelte-retag>');
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div>');
 	});
 
 	test('with just default slot', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad>Boom</test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div><!--<TestTag>--></svelte-retag>');
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div>');
 		expect(el.querySelector('test-shad').innerHTML).toBe('Boom');
 	});
 
@@ -43,41 +46,56 @@ describe('<test-tag> (Shadow DOM)', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad><div slot="inner">HERE</div></test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content">Main Default <div><slot name="inner"></slot></div></div><!--<TestTag>--></svelte-retag>');
+
+		// NOTE: See how the <slot> tag is now present in the shadow DOM, whereas before it was still <div>Inner Default</div>.
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content">Main Default <div><slot name="inner"></slot></div></div>');
+
+		// Slot from the light DOM still persists there.
+		expect(el.querySelector('test-shad').innerHTML).toBe('<div slot="inner">HERE</div>');
 	});
 
 	test('both slots', () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad>BOOM!<div slot="inner">HERE</div></test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
-		// TODO: Why does this not produce the inner HERE? Maybe just my ignorance.
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content"><slot></slot> <div><slot name="inner"></slot></div></div><!--<TestTag>--></svelte-retag>');
+
+		// NOTE: See how the <slot> tags are present in the shadow DOM, whereas before it was still <div>Inner Default</div>.
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div><slot name="inner"></slot></div></div>');
+
+		// Slots from the light DOM still persist there.
+		expect(el.querySelector('test-shad').innerHTML).toBe('BOOM!<div slot="inner">HERE</div>');
 	});
 
 	test('Unknown slot gets ignored', () => {
+		// Capture errors and ensure only the expected ones appear below.
 		let tmp = console.warn;
-		console.warn = function() {
+		let warnings = [];
+		console.warn = function(message) {
+			warnings.push(message);
 		};
+
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad><div slot="unknown">HERE</div></test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = el.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></svelte-retag>');
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div>');
 		console.warn = tmp;
+
+		// Validate that we got just 1 warning and that it contains 'received an unexpected slot "unknown"'.
+		expect(warnings.length).toBe(1);
+		expect(warnings[0]).toContain('received an unexpected slot "unknown"');
 	});
 
 	test('dynamically adding content to component', async () => {
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad></test-shad>';
 		document.body.appendChild(el);
-		let shadowhtml = document.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div><!--<TestTag>--></svelte-retag>');
-		document.querySelector('test-shad').innerHTML = 'New Content';
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content">Main Default <div>Inner Default</div></div>');
+
+		el.querySelector('test-shad').innerHTML = 'New Content';
 		await tick();
-		shadowhtml = document.querySelector('test-shad').shadowRoot.innerHTML;
-		expect(shadowhtml).toBe('<svelte-retag><h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div><!--<TestTag>--></svelte-retag>');
+
+		// Verify that the default slot contents have been displaced with the expected <slot> placeholder
+		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div>');
 	});
 
 });
