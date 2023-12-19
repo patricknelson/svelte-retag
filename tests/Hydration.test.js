@@ -75,6 +75,7 @@ describe('<hydration-tag>: Incorporation of special hydration attributes and tag
 
 	test('hydrate from pre-rendered HTML', async () => {
 		el = document.createElement('div');
+		// TODO: ISSUE-20: <svelte-retag> is still being used here for hydration purposes but could potentially be removed.
 		el.innerHTML = `
 			<hydration-tag data-svelte-retag-hydratable>
 				<svelte-retag>
