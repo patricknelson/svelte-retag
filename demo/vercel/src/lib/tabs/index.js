@@ -1,4 +1,5 @@
-export { default as TabsWrapper } from './TabsWrapper.svelte';
-export { default as TabList } from './TabList.svelte';
-export { default as TabPanel } from './TabPanel.svelte';
-export { default as TabButton } from './TabButton.svelte';
+// NOTE: This index file only exists for the tabs-demo.svelte file.
+export { default as TabsWrapper } from './tabs-wrapper.svelte';
+export { default as TabList } from './tab-list.svelte';
+export { default as TabPanel } from './tab-panel.svelte';
+export { default as TabButton } from './tab-button.svelte';

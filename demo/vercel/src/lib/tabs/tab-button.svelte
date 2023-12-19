@@ -1,6 +1,6 @@
 <script>
 	import { getContext } from 'svelte';
-	import { TABS } from './TabsWrapper.svelte';
+	import { TABS } from './tabs-wrapper.svelte';
 
 	const tab = {};
 	const { registerTab, selectTab, selectedTab } = getContext(TABS);
