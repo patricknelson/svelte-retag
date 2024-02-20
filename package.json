@@ -11,7 +11,7 @@
     "build": "tsc --emitDeclarationOnly",
     "bump:patch": "npm version patch",
     "bump:minor": "npm version minor",
-    "pub": "npm run test && npm run eslint && npm run build && git push --tags && npm publish"
+    "pub": "npm run test && npm run eslint && npm run build && git push --follow-tags && npm publish"
   },
   "repository": {
     "type": "git",
