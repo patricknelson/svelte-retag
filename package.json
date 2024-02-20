@@ -9,7 +9,9 @@
     "vitest": "vitest run",
     "eslint": "eslint index.js tests/*",
     "build": "tsc --emitDeclarationOnly",
-    "pub": "npm run test && npm run eslint && npm run build && npm publish"
+    "bump:patch": "npm version patch",
+    "bump:minor": "npm version minor",
+    "pub": "npm run test && npm run eslint && npm run build && git push --tags && npm publish"
   },
   "repository": {
     "type": "git",
