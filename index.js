@@ -77,6 +77,7 @@ function renderElements(timestamp) {
  * @property {CmpConstructor}   component       The Svelte component *class* constructor to incorporate into your custom element (this is the imported component class, *not* an instance)
  * @property {string}           tagname         Name of the custom element tag you'd like to define.
  * @property {string[]|boolean} [attributes=[]] Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
+ * @property {boolean|string[]} [ignoreCommonAttribWarnings=false]  Suppresses warnings in development mode about common attributes (such as "id", "class" and "data-*") if they don't already exist on the component. Set to an array to customize the list of ignored attributes.
  * @property {boolean}          [shadow=false]  Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
  * @property {string}           [href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
@@ -121,6 +122,19 @@ export default function svelteRetag(opts) {
 		window.customElements.define('svelte-retag-default', class extends HTMLElement {
 			// noop
 		});
+	}
+
+	// Filter for dynamically ignoring errors when using common attributes which might potentially be on a custom element
+	// but ALSO aren't already explicitly defined on the Svelte component. Default to false but allow user to enable.
+	let ignoreAttribFilter = () => false;
+	if (opts?.ignoreCommonAttribWarnings === true) {
+		ignoreAttribFilter = (name) => {
+			return (name === 'id' || name === 'class' || name === 'style' || name.startsWith('data-'));
+		};
+	} else if (Array.isArray(opts.ignoreCommonAttribWarnings)) {
+		ignoreAttribFilter = (name) => {
+			return opts.ignoreCommonAttribWarnings.includes(name);
+		};
 	}
 
 	/**
@@ -320,7 +334,9 @@ export default function svelteRetag(opts) {
 			// If instance already available, pass it through immediately.
 			if (this.componentInstance) {
 				let translatedName = this._translateAttribute(name);
-				this.componentInstance.$set({ [translatedName]: value });
+				if (translatedName !== null) {
+					this.componentInstance.$set({ [translatedName]: value });
+				}
 			}
 		}
 
@@ -359,7 +375,7 @@ export default function svelteRetag(opts) {
 		 * Converts the provided lowercase attribute name to the correct case-sensitive component prop name, if possible.
 		 *
 		 * @param {string} attributeName
-		 * @returns {string}
+		 * @returns {string|null}
 		 */
 		_translateAttribute(attributeName) {
 			// In the unlikely scenario that a browser somewhere doesn't do this for us (or maybe we're in a quirks mode or something...)
@@ -367,8 +383,15 @@ export default function svelteRetag(opts) {
 			if (this.propMap && this.propMap.has(attributeName)) {
 				return this.propMap.get(attributeName);
 			} else {
-				this._debug(`_translateAttribute(): ${attributeName} not found`);
-				return attributeName;
+				// Return it unchanged but only if it's not in our "ignore attributes" filter.
+				if (!ignoreAttribFilter(attributeName)) {
+					this._debug(`_translateAttribute(): ${attributeName} not found on component, keeping unchanged`);
+					return attributeName;
+				} else {
+					// Ignored.
+					this._debug(`_translateAttribute(): ${attributeName} matched ignore filter, skipping entirely`);
+					return null;
+				}
 			}
 		}
 
@@ -515,9 +538,13 @@ export default function svelteRetag(opts) {
 				// props object with the correct case.
 				this.propMap = propMapCache.get(this.tagName);
 				for(let attr of [...this.attributes]) {
-					// Note: Skip svelte-retag specific attributes (used for hydration purposes).
-					if (attr.name.indexOf('data-svelte-retag') !== -1) continue;
-					props[this._translateAttribute(attr.name)] = attr.value;
+					// Note: Skip svelte-retag specific attributes (used for hydration purposes). This is not included in the ignored
+					// attributes filter since it's a special case and cannot be overridden.
+					if (attr.name.startsWith('data-svelte-retag')) continue;
+					const translatedName = this._translateAttribute(attr.name);
+					if (translatedName !== null) {
+						props[translatedName] = attr.value;
+					}
 				}
 			}
 
