@@ -155,6 +155,8 @@ Changes since forking from [`svelte-tag`](https://github.com/crisward/svelte-tag
 	example (https://github.com/patricknelson/svelte-retag/pull/24)
 - Automatically forward all attributes to component (i.e. `attributes: true`) (https://github.com/patricknelson/svelte-retag/issues/34)
 - Add better TypeScript support (https://github.com/patricknelson/svelte-retag/pull/33)
+- Add ability to suppress warnings for common attributes (such as `id`, `class`, `style` and `data-*`) if they don't
+  already exist on the component (https://github.com/patricknelson/svelte-retag/pull/54)
 
 ### v2
 
