@@ -9,15 +9,11 @@ import { syncRaf } from './test-utils.js';
 // TODO: Needs unit tests to validate attributes/props being handled correctly (at minimum pass through)
 
 let el = null;
-let cssFile = 'test.css';
-let cssFiles = ['test0.css', 'test1.css', 'test2.css'];
 
 describe('<test-tag> (Shadow DOM)', () => {
 
 	beforeAll(() => {
 		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true});
-		svelteRetag({ component: TestTag, tagname: 'test-shad-single-css', shadow: true, href: cssFile});
-		svelteRetag({ component: TestTag, tagname: 'test-shad-multi-css', shadow: true, href: cssFiles});
 
 		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
@@ -103,6 +99,8 @@ describe('<test-tag> (Shadow DOM)', () => {
 	});
 
 	test('href flag with single css file', () => {
+		svelteRetag({ component: TestTag, tagname: 'test-shad-single-css', shadow: true, href: 'test.css'});
+
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad-single-css></test-shad-single-css>';
 		document.body.appendChild(el);
@@ -112,6 +110,8 @@ describe('<test-tag> (Shadow DOM)', () => {
 	});
 
 	test('href flag with multi css files', () => {
+		svelteRetag({ component: TestTag, tagname: 'test-shad-multi-css', shadow: true, href: ['test0.css', 'test1.css', 'test2.css']});
+
 		el = document.createElement('div');
 		el.innerHTML = '<test-shad-multi-css></test-shad-multi-css>';
 		document.body.appendChild(el);
