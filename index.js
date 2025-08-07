@@ -79,7 +79,7 @@ function renderElements(timestamp) {
  * @property {string[]|boolean} [attributes=[]] Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
  * @property {boolean|string[]} [ignoreCommonAttribWarnings=false]  Suppresses warnings in development mode about common attributes (such as "id", "class" and "data-*") if they don't already exist on the component. Set to an array to customize the list of ignored attributes.
  * @property {boolean}          [shadow=false]  Indicates if we should build the component in the shadow root instead of in the regular ("light") DOM.
- * @property {string}           [href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
+ * @property {string|string[]}  [href=""]       URL to the CSS stylesheet to incorporate into the shadow DOM (if enabled).
  *
  * Experimental:
  * @property {boolean}          [hydratable=false] EXPERIMENTAL. Light DOM slot hydration (specific to svelte-retag): Enables
@@ -166,10 +166,13 @@ export default function svelteRetag(opts) {
 
 				// Link generated style. Do early as possible to ensure we start downloading CSS (reduces FOUC).
 				if (opts.href) {
-					let link = document.createElement('link');
-					link.setAttribute('href', opts.href);
-					link.setAttribute('rel', 'stylesheet');
-					this.shadowRoot.appendChild(link);
+					const hrefs = Array.isArray(opts.href) ? opts.href : [opts.href];
+					hrefs.forEach(href => {
+						let link = document.createElement('link');
+						link.setAttribute('href', href);
+						link.setAttribute('rel', 'stylesheet');
+						this.shadowRoot.appendChild(link);
+					});
 				}
 			}
 		}

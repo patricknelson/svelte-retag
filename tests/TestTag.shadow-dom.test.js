@@ -9,11 +9,15 @@ import { syncRaf } from './test-utils.js';
 // TODO: Needs unit tests to validate attributes/props being handled correctly (at minimum pass through)
 
 let el = null;
+let cssFile = 'test.css';
+let cssFiles = ['test0.css', 'test1.css', 'test2.css'];
 
 describe('<test-tag> (Shadow DOM)', () => {
 
 	beforeAll(() => {
-		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
+		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true});
+		svelteRetag({ component: TestTag, tagname: 'test-shad-single-css', shadow: true, href: cssFile});
+		svelteRetag({ component: TestTag, tagname: 'test-shad-multi-css', shadow: true, href: cssFiles});
 
 		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
@@ -96,6 +100,26 @@ describe('<test-tag> (Shadow DOM)', () => {
 
 		// Verify that the default slot contents have been displaced with the expected <slot> placeholder
 		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div>');
+	});
+
+	test('href flag with single css file', () => {
+		el = document.createElement('div');
+		el.innerHTML = '<test-shad-single-css></test-shad-single-css>';
+		document.body.appendChild(el);
+
+		// Validate that the css file is added to the shadow DOM as a <link> tag
+		expect(el.querySelector('test-shad-single-css').shadowRoot.querySelector('link').outerHTML).toBe('<link href="test.css" rel="stylesheet">');
+	});
+
+	test('href flag with multi css files', () => {
+		el = document.createElement('div');
+		el.innerHTML = '<test-shad-multi-css></test-shad-multi-css>';
+		document.body.appendChild(el);
+
+		// Validate that the all the css files are added to the shadom DOM as <link> tags
+		el.querySelector('test-shad-multi-css').shadowRoot.querySelectorAll('link').forEach((link, index) => {
+			expect(link.outerHTML).toBe('<link href="test'+(index)+'.css" rel="stylesheet">');
+		});
 	});
 
 });
