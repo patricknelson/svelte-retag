@@ -13,7 +13,7 @@ let el = null;
 describe('<test-tag> (Shadow DOM)', () => {
 
 	beforeAll(() => {
-		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true});
+		svelteRetag({ component: TestTag, tagname: 'test-shad', shadow: true });
 
 		vi.spyOn(window, 'requestAnimationFrame').mockImplementation(syncRaf);
 	});
