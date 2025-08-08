@@ -120,7 +120,7 @@ describe('<test-tag> (Shadow DOM)', () => {
 		expect(
 			normalizeWhitespace(getShadowHTMLRecursive(outer, 'main'))
 		).toBe(
-			'<main><h1>Main H1</h1><div class="content"><svelte-retag><main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner</div></div></div></main></svelte-retag><div><div slot="inner">Outer</div></div></div></main>'
+			'<main><h1>Main H1</h1><div class="content"><main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner</div></div></div></main><div><div slot="inner">Outer</div></div></div></main>'
 		);
 
 		// Inner component should have its own "inner" slot and default content for the default slot.

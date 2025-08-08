@@ -160,17 +160,22 @@ export default function svelteRetag(opts) {
 			// Setup shadow root early (light-DOM root is initialized in connectedCallback() below).
 			if (opts.shadow) {
 				this.attachShadow({ mode: 'open' });
-				// TODO: Better than <div>, but: Is a wrapper entirely necessary? Why not just set this._root = this.shadowRoot?
-				this._root = document.createElement('svelte-retag');
-				this.shadowRoot.appendChild(this._root);
+				this._root = this.shadowRoot;
 
 				// Link generated style. Do early as possible to ensure we start downloading CSS (reduces FOUC).
-				if (opts.href) {
-					let link = document.createElement('link');
-					link.setAttribute('href', opts.href);
-					link.setAttribute('rel', 'stylesheet');
-					this.shadowRoot.appendChild(link);
-				}
+				this.appendShadowDomStylesheet();
+			}
+		}
+
+		/**
+		 * Setup link to CSS stylesheet[s] in the shadow DOM (if configured).
+		 */
+		appendShadowDomStylesheet() {
+			if (opts.href) {
+				let link = document.createElement('link');
+				link.setAttribute('href', opts.href);
+				link.setAttribute('rel', 'stylesheet');
+				this._root.appendChild(link);
 			}
 		}
 
@@ -476,6 +481,7 @@ export default function svelteRetag(opts) {
 
 			// On each rerender, we have to reset our root container since Svelte will just append to our target.
 			this._root.innerHTML = '';
+			this.appendShadowDomStylesheet();
 
 			// Prep context, which is an important dependency prior to ANY instantiation of the Svelte component.
 			const context = this._getAncestorContext() || new Map();

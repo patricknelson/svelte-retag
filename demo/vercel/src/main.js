@@ -9,8 +9,10 @@ import './app.css';
 const params = new URLSearchParams(location.search);
 const debugMode = params.get('debug');
 const hydratable = !!params.get('hydratable');
+
+// TODO: ISSUE-6: Styles only work on build, not during dev mode. Find good solution for defining this. For now, hack is to inject style[data-vite-dev-id] into shadowRoot.
 const shadow = !!params.get('shadow');
-const shadowStylesheet = ''; // TODO: ISSUE-6: Find good solution for defining this. For now, hack is to inject style[data-vite-dev-id] into shadowRoot.
+const shadowStylesheet = '/assets/main.css';
 
 
 

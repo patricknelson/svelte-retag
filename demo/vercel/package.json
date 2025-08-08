@@ -9,7 +9,7 @@
     "dev:iife": "nodemon --watch '../../' --ext 'js,html' --ignore ./dist/  --exec yarn build:iife & alive-server --port=4173 --watch=dist/js/ --no-browser dist/",
     "build": "rm -rf dist/ && vite build && yarn build:iife && cp iife.html dist/",
     "build:iife": "VITE_BUILD_FORMAT=iife vite build",
-    "preview": "vite preview"
+    "preview": "yarn build && vite preview"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.6",
