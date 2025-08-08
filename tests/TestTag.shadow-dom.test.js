@@ -99,8 +99,6 @@ describe('<test-tag> (Shadow DOM)', () => {
 		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div>');
 	});
 
-	// TODO: Test proper replacement of default slot (i.e. don't add if no additional content, even if we have excess whitespace nodes)
-
 	test('deeply nested slots are not picked up by parent', () => {
 		el = document.createElement('div');
 		el.innerHTML = `
@@ -128,6 +126,33 @@ describe('<test-tag> (Shadow DOM)', () => {
 			normalizeWhitespace(getShadowHTMLRecursive(inner, 'main'))
 		).toBe(
 			'<main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner</div></div></div></main>'
+		);
+	});
+
+	test('proper replacement of default slot', async () => {
+		el = document.createElement('div');
+		el.innerHTML = `
+			<test-shad>
+				<div slot="inner">Inner Content</div>
+			</test-shad>
+		`;
+		document.body.appendChild(el);
+		const component = el.querySelector('test-shad');
+
+		// Verify that the default slot is NOT replaced (since no default content is provided)
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(component, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner Content</div></div></div></main>'
+		);
+
+		// Now, add default slot content and verify it IS replaced
+		component.innerHTML += '<div>Default Content</div>';
+		await tick();
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(component, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content"><div>Default Content</div><div><div slot="inner">Inner Content</div></div></div></main>'
 		);
 	});
 
