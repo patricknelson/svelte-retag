@@ -2,7 +2,7 @@ import { describe, beforeAll, afterAll, test, expect, vi } from 'vitest';
 import svelteRetag from '../index.js';
 import TestTag from './TestTag.svelte';
 import { tick } from 'svelte';
-import { syncRaf } from './test-utils.js';
+import { getShadowHTMLRecursive, normalizeWhitespace, syncRaf } from './test-utils.js';
 
 // See vite.config.js for configuration details.
 
@@ -22,6 +22,7 @@ describe('<test-tag> (Shadow DOM)', () => {
 		window.requestAnimationFrame.mockRestore();
 	});
 
+	// TODO: Migrate unit tests below to use getShadowHTMLRecursive() instead of this helper.
 	function getShadowHTML() {
 		// fetch the inner HTML from the <main> wrapper tag inside the shadow DOM
 		return el.querySelector('test-shad').shadowRoot.querySelector('main').innerHTML;
@@ -96,6 +97,63 @@ describe('<test-tag> (Shadow DOM)', () => {
 
 		// Verify that the default slot contents have been displaced with the expected <slot> placeholder
 		expect(getShadowHTML()).toBe('<h1>Main H1</h1> <div class="content"><slot></slot> <div>Inner Default</div></div>');
+	});
+
+	test('deeply nested slots are not picked up by parent', () => {
+		el = document.createElement('div');
+		el.innerHTML = `
+			<test-shad>
+				<div slot="inner">Outer</div>
+				<test-shad>
+					<div slot="inner">Inner</div>
+				</test-shad>
+			</test-shad>
+		`;
+		document.body.appendChild(el);
+
+		const outer = el.querySelector('test-shad');
+		const inner = el.querySelector('test-shad test-shad');
+
+		// Outer component should have its own "inner" slot, and the inner component in the default slot.
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(outer, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content"><main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner</div></div></div></main><div><div slot="inner">Outer</div></div></div></main>'
+		);
+
+		// Inner component should have its own "inner" slot and default content for the default slot.
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(inner, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner</div></div></div></main>'
+		);
+	});
+
+	test('proper replacement of default slot', async () => {
+		el = document.createElement('div');
+		el.innerHTML = `
+			<test-shad>
+				<div slot="inner">Inner Content</div>
+			</test-shad>
+		`;
+		document.body.appendChild(el);
+		const component = el.querySelector('test-shad');
+
+		// Verify that the default slot is NOT replaced (since no default content is provided)
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(component, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content">Main Default <div><div slot="inner">Inner Content</div></div></div></main>'
+		);
+
+		// Now, add default slot content and verify it IS replaced
+		component.innerHTML += '<div>Default Content</div>';
+		await tick();
+		expect(
+			normalizeWhitespace(getShadowHTMLRecursive(component, 'main'))
+		).toBe(
+			'<main><h1>Main H1</h1><div class="content"><div>Default Content</div><div><div slot="inner">Inner Content</div></div></div></main>'
+		);
 	});
 
 	test('href flag with single css file', () => {
