@@ -747,15 +747,44 @@ export default function svelteRetag(opts) {
 			this._debug('_getShadowSlots()');
 			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
-			let htmlLength = this.innerHTML.length;
+			let childNodes = [...this.childNodes]; // For tracking remaining nodes for default slot.
 			namedSlots.forEach(n => {
 				slots[n.slot] = document.createElement('slot');
 				slots[n.slot].setAttribute('name', n.slot);
-				htmlLength -= n.outerHTML.length;
+
+				// Remove from child nodes array, if found. This helps us determine if we have any remaining HTML for the default slot.
+				let index = childNodes.indexOf(n);
+				if (index !== -1) {
+					childNodes.splice(index, 1);
+				}
 			});
-			if (htmlLength > 0) {
+
+			// To determine if we have any remaining child nodes, we need to manually concatenate and trim whitespace. Bail
+			// early if any of the nodes are not text nodes or if they contain non-whitespace text.
+			let hasDefaultContent = false;
+			for(let node of childNodes) {
+				if (node.nodeType === Node.TEXT_NODE) {
+					if (node.textContent.trim() !== '') {
+						hasDefaultContent = true;
+						break;
+					}
+				} else if (node.nodeType === Node.ELEMENT_NODE) {
+					// Any element node means we have default content.
+					hasDefaultContent = true;
+					break;
+				} else if (node.nodeType === Node.COMMENT_NODE) {
+					// Ignore comments.
+				} else {
+					// Other node types (e.g. processing instructions, CDATA, etc) are considered content.
+					hasDefaultContent = true;
+					break;
+				}
+			}
+
+			if (hasDefaultContent) {
 				slots.default = document.createElement('slot');
 			}
+
 			return slots;
 		}
 
