@@ -162,7 +162,7 @@ Changes since forking from [`svelte-tag`](https://github.com/crisward/svelte-tag
   - Fix slot issues with deeply nested components
   - Fix styles not being properly added to shadow DOM (partial fix to https://github.com/patricknelson/svelte-retag/issues/6, created https://github.com/patricknelson/svelte-retag/issues/66 for remainder)
   - Remove `<svelte-retag>` wrapper from shadow DOM (relates to https://github.com/patricknelson/svelte-retag/issues/20 for light DOM)
-- Add ability to specify multiple files in `href` flag
+- Add ability to specify multiple files in `href` flag (https://github.com/patricknelson/svelte-retag/issues/65)
 
 ### v2
 
