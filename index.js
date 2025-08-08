@@ -748,12 +748,15 @@ export default function svelteRetag(opts) {
 			const namedSlots = this.querySelectorAll('[slot]');
 			let slots = {};
 			let childNodes = [...this.childNodes]; // For tracking remaining nodes for default slot.
-			namedSlots.forEach(n => {
-				slots[n.slot] = document.createElement('slot');
-				slots[n.slot].setAttribute('name', n.slot);
+			namedSlots.forEach(candidate => {
+				// Skip this slot if it doesn't happen to belong to THIS custom element.
+				if (!this._isOwnSlot(candidate)) return;
+
+				slots[candidate.slot] = document.createElement('slot');
+				slots[candidate.slot].setAttribute('name', candidate.slot);
 
 				// Remove from child nodes array, if found. This helps us determine if we have any remaining HTML for the default slot.
-				let index = childNodes.indexOf(n);
+				let index = childNodes.indexOf(candidate);
 				if (index !== -1) {
 					childNodes.splice(index, 1);
 				}

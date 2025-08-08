@@ -67,3 +67,72 @@ function processSyncRaf() {
 		processSyncRaf();
 	}
 }
+
+
+/**
+ * Serialize the composed DOM of a custom element's shadow tree, recursively.
+ * No ShadowRoot cloning (jsdom-safe).
+ *
+ * @param {Element} host            The custom element
+ * @param {string|null} rootSelector Optional selector inside shadowRoot (e.g. 'main')
+ * @returns {string} HTML string of the composed subtree
+ */
+export function getShadowHTMLRecursive(host, rootSelector = null) {
+	if (!host || !host.shadowRoot) return '';
+
+	const root = rootSelector
+		? host.shadowRoot.querySelector(rootSelector) || host.shadowRoot
+		: host.shadowRoot;
+
+	const rendered = renderNode(root);
+	const wrapper = document.createElement('div');
+	wrapper.appendChild(rendered);
+	return wrapper.innerHTML;
+
+	// ---- helpers ----
+
+	function renderNode(node) {
+		// Text -> clone text
+		if (node.nodeType === Node.TEXT_NODE) {
+			return document.createTextNode(node.nodeValue || '');
+		}
+
+		// Comments/others -> skip
+		if (node.nodeType !== Node.ELEMENT_NODE &&
+			!(node instanceof ShadowRoot) &&
+			!(node instanceof DocumentFragment)) {
+			return document.createDocumentFragment();
+		}
+
+		// ShadowRoot/DocumentFragment -> render children
+		if (node instanceof ShadowRoot || node instanceof DocumentFragment) {
+			const frag = document.createDocumentFragment();
+			node.childNodes.forEach((c) => frag.appendChild(renderNode(c)));
+			return frag;
+		}
+
+		const el = /** @type {Element} */ (node);
+
+		// If this is a <slot>, expand it
+		if (el.tagName === 'SLOT') {
+			const slot = /** @type {HTMLSlotElement} */ (el);
+			const assigned = slot.assignedNodes({ flatten: true });
+			const nodes = assigned.length ? assigned : slot.childNodes;
+			const frag = document.createDocumentFragment();
+			nodes.forEach((n) => frag.appendChild(renderNode(n)));
+			return frag;
+		}
+
+		// If this element is a shadow host, render its shadowRoot INSTEAD of the host tag
+		if (/** @type any */ (el).shadowRoot) {
+			return renderNode((/** @type any */ (el)).shadowRoot);
+		}
+
+		// Plain element: recreate it and copy attributes, then render children
+		const out = document.createElement(el.tagName.toLowerCase());
+		// copy attributes
+		for (const attr of el.attributes) out.setAttribute(attr.name, attr.value);
+		el.childNodes.forEach((c) => out.appendChild(renderNode(c)));
+		return out;
+	}
+}
