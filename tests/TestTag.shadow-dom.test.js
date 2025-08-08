@@ -156,4 +156,28 @@ describe('<test-tag> (Shadow DOM)', () => {
 		);
 	});
 
+	test('href flag with single css file', () => {
+		svelteRetag({ component: TestTag, tagname: 'test-shad-single-css', shadow: true, href: 'test.css'});
+
+		el = document.createElement('div');
+		el.innerHTML = '<test-shad-single-css></test-shad-single-css>';
+		document.body.appendChild(el);
+
+		// Validate that the css file is added to the shadow DOM as a <link> tag
+		expect(el.querySelector('test-shad-single-css').shadowRoot.querySelector('link').outerHTML).toBe('<link href="test.css" rel="stylesheet">');
+	});
+
+	test('href flag with multi css files', () => {
+		svelteRetag({ component: TestTag, tagname: 'test-shad-multi-css', shadow: true, href: ['test0.css', 'test1.css', 'test2.css']});
+
+		el = document.createElement('div');
+		el.innerHTML = '<test-shad-multi-css></test-shad-multi-css>';
+		document.body.appendChild(el);
+
+		// Validate that the all the css files are added to the shadom DOM as <link> tags
+		el.querySelector('test-shad-multi-css').shadowRoot.querySelectorAll('link').forEach((link, index) => {
+			expect(link.outerHTML).toBe('<link href="test'+(index)+'.css" rel="stylesheet">');
+		});
+	});
+
 });
