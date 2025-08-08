@@ -171,7 +171,7 @@ export default function svelteRetag(opts) {
 		 * Setup link to CSS stylesheet[s] in the shadow DOM (if configured).
 		 */
 		appendShadowDomStylesheet() {
-			if (opts.href) {
+			if (opts.shadow && opts.href) {
 				let link = document.createElement('link');
 				link.setAttribute('href', opts.href);
 				link.setAttribute('rel', 'stylesheet');
