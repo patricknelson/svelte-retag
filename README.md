@@ -157,6 +157,11 @@ Changes since forking from [`svelte-tag`](https://github.com/crisward/svelte-tag
 - Add better TypeScript support (https://github.com/patricknelson/svelte-retag/pull/33)
 - Add ability to suppress warnings for common attributes (such as `id`, `class`, `style` and `data-*`) if they don't
   already exist on the component (https://github.com/patricknelson/svelte-retag/pull/54)
+- Addressed shadow DOM bugs (https://github.com/patricknelson/svelte-retag/pull/65):
+  - Only setup `default` slot if needed
+  - Fix slot issues with deeply nested components
+  - Fix styles not being properly added to shadow DOM
+  - Remove `<svelte-retag>` wrapper from shadow DOM
 
 ### v2
 
