@@ -37,6 +37,34 @@ Svelte already allows you to compile your components to custom elements. However
 * Vite HMR doesn't work with custom elements (https://github.com/sveltejs/svelte/issues/8681
 	and https://github.com/sveltejs/svelte-hmr/issues/26)
 
+## How _should_ I use it?
+
+> Your scientists were so preoccupied with whether or not they could, they didn't stop to think if they should.
+> _— Dr. Ian Malcolm, Jurassic Park_
+
+It boils down to the tradeoffs between **light DOM** and **shadow DOM**. Put simply:
+
+* **Light DOM** is better suited in situations when you have _complete control_ over the stack where you were
+  implementing `svelte-retag`. Also: You should avoid using the light DOM in situations where you might expect other
+  code or libraries (e.g. **jQuery**, **htmx** or even **React**) to be modifying anything _below_ your custom element
+  tag)!
+* **Shadow DOM** is _by far_ the best approach in situations where you need good encapsulation. So, if you plan on
+  incorporating your component on a third party website (e.g. as a component library) or you are mixing your components
+  in with other libraries that need to manipulate HTML (like the libraries listed above) then the shadow DOM may be a
+  great fit.
+
+One of the primary motivations of this library was to help bring _some_ of the great features of the shadow DOM into the
+light DOM. Unfortunately, the primary feature of the shadow DOM, encapsulation, is _also_ its Achilles Heel. For
+example, all **CSS styles** defined within your custom element are restricted to that element's shadow root. Likewise,
+most ([but not all](https://web.dev/articles/shadowdom-v1#resetting_inheritable_styles)) styles defined outside of your
+custom element are also locked away. This can be both an advantage and a disadvantage, depending on your situation.
+Another concern is **accessibility**, for example, like when the shadow DOM boundary _lives in between_ an element
+targeted by `aria-labelledby` or `aria-describeddby`, as described by
+[Nolan Lawson's article here](https://nolanlawson.com/2022/11/28/shadow-dom-and-accessibility-the-trouble-with-aria/).
+While in theory this could also be framed as a good thing (i.e. better separation of concerns by preventing abstract
+components from targeting the contents of other unrelated components), this could be tedious to deal with for some, given
+the extra effort required over using the light DOM instead.
+
 ## How do I use it?
 
 ### Installation & Quick Start
