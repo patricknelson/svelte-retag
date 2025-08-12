@@ -67,14 +67,13 @@ function renderElements(timestamp) {
 
 
 /**
- * @typedef {new(...args: any[]) => any} Newable        Type alias for a really generic class constructor
- * @typedef {Newable}                    CmpConstructor Svelte component class constructor (basically a "newable" object)
+ * @typedef {import("svelte").ComponentType} ComponentType
  */
 
 /**
  * @typedef {object} SvelteRetagOptions Configuration options for svelte-retag. See README.md for details.
  *
- * @property {CmpConstructor}   component       The Svelte component *class* constructor to incorporate into your custom element (this is the imported component class, *not* an instance)
+ * @property {ComponentType}   component       The Svelte component *class* constructor to incorporate into your custom element (this is the imported component class, *not* an instance)
  * @property {string}           tagname         Name of the custom element tag you'd like to define.
  * @property {string[]|boolean} [attributes=[]] Optional array of attributes that should be reactively forwarded to the component when modified. Set to true to automatically watch all attributes.
  * @property {boolean|string[]} [ignoreCommonAttribWarnings=false]  Suppresses warnings in development mode about common attributes (such as "id", "class" and "data-*") if they don't already exist on the component. Set to an array to customize the list of ignored attributes.
