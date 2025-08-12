@@ -67,7 +67,7 @@ function renderElements(timestamp) {
 
 
 /**
- * @typedef {import("svelte").ComponentType} ComponentType
+ * @typedef {import("svelte").ComponentType} ComponentType TODO: svelte5: Type deprecated in Svelte5: https://svelte.dev/docs/svelte/svelte#ComponentType
  */
 
 /**
@@ -298,6 +298,7 @@ export default function svelteRetag(opts) {
 			if (this.componentInstance) {
 				try {
 					// Clean up: Destroy Svelte component when removed from DOM.
+					// TODO: svelte5: Use unmount() instead, see https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 					this.componentInstance.$destroy();
 					delete this.componentInstance;
 				} catch(err) {
@@ -558,6 +559,7 @@ export default function svelteRetag(opts) {
 
 			// Instantiate component into our root now, which is either the "light DOM" (i.e. directly under this element) or
 			// in the shadow DOM.
+			// TODO: svelte5: No longer an object, use new mount() syntax, see https://svelte.dev/docs/svelte/v5-migration-guide#Components-are-no-longer-classes
 			this.componentInstance = new opts.component({ target: this._root, props: props, context });
 
 			// Setup mutation observer to watch for changes to attributes on this element (if not already done) now that we
